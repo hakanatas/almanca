@@ -63,12 +63,21 @@ Ev, Boş Zaman (veya hepsi karışık). Temalar MEB 2. yabancı dil Almanca A1
   Ateşli (3 gün seri), Deutsch-König (5. seviye).
 - İlerleme cihazda (`localStorage`) saklanır; hesap/sunucu gerekmez.
 
-## 4. Proje yapısı
+## 4. Görsel stil
+
+*Nokta'nın Filmleri* ile aynı mürekkep dünyası: kâğıt dokulu zemin, siyah mürekkep
+çizgiler, kehribar vurgu, mühür kırmızısı. Başlıklar el yazısı fırça (Caveat Brush),
+metin serif (Fraunces), etiketler daktilo (JetBrains Mono). Maskot Max SVG ile çizilmiş
+bir Dackel; kontürü el çizimi animasyonlardaki gibi hafifçe "kaynar". Artikel renkleri
+mürekkep tonlarında: **der** mavi mürekkep, **die** mühür kırmızısı, **das** yeşil mürekkep.
+
+## 5. Proje yapısı
 
 ```
 index.html        Ekranlar (ana menü, oyun, sonuç)
 css/style.css     Görünüm, animasyonlar, karanlık mod
 js/data.js        TÜM İÇERİK: temalar, kelimeler, cümleler, fiiller, artikel kuralları
+js/art.js         Maskot Max ve ikonların SVG çizimleri
 js/app.js         Oyun motoru, 5 mini oyun, XP/rozet sistemi
 manifest.json     Ana ekrana eklenebilir uygulama (PWA) bilgisi
 ```
@@ -89,7 +98,7 @@ Cümle eklemek (kelimeler doğru sırada yazılır, oyun kendisi karıştırır)
 
 Yeni tema için `THEMES` dizisine aynı yapıda yeni bir nesne eklenir; menüde otomatik görünür.
 
-## 5. Yol haritası (sonraki adımlar)
+## 6. Yol haritası (sonraki adımlar)
 
 - [ ] **Sınıf modu:** Öğretmen bir kod paylaşır, öğrenciler aynı anda yarışır (canlı liderlik tablosu)
 - [ ] **Aralıklı tekrar (spaced repetition):** Yanlış yapılan kelimeler daha sık sorulsun

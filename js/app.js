@@ -112,8 +112,11 @@ function renderHome() {
 
   const tl = $('#theme-list');
   tl.innerHTML = '';
-  [{ id: 'all', icon: '🌍', tr: 'Hepsi', de: 'Alles' }, ...THEMES].forEach((t) => {
-    const b = el('button', 'chip' + (state.theme === t.id ? ' on' : ''), `<span class="emoji">${t.icon}</span><span>${t.tr}<small>${t.de}</small></span>`);
+  [{ id: 'all', tr: 'Hepsi', de: 'Alles', words: allWords() }, ...THEMES].forEach((t) => {
+    const n = t.words ? t.words.length : 0;
+    const b = el('button', 'theme', `${t.tr}<small>${t.de} · ${n} kelime</small>`);
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', String(state.theme === t.id));
     b.onclick = () => { state.theme = t.id; save(); renderHome(); };
     tl.appendChild(b);
   });
@@ -122,24 +125,34 @@ function renderHome() {
   gl.innerHTML = '';
   Object.entries(GAMES).forEach(([id, g], i) => {
     const best = state.best[id];
-    const card = el('button', `game-card c-${id}`, `
-      <span class="g-tile">${ICONS[id]}</span>
-      <span class="g-text">
-        <span class="g-name">${g.name}</span>
-        <span class="g-desc">${g.desc}</span>
-      </span>
-      <span class="g-best ${best != null ? '' : 'new'}">${best != null ? 'Rekor ' + best : 'Yeni'}</span>
-      <span class="g-go">${UI_ICONS.arrow}</span>`);
-    card.style.setProperty('--i', i);
-    card.onclick = () => startGame(id);
-    gl.appendChild(card);
+    const li = el('li', 'step', `
+      <div class="num">${HAND_CIRCLE}<b>${i + 1}</b></div>
+      <div class="meta">
+        <div class="meta-top">
+          <div>
+            <span class="code">${g.code}</span><span class="dur">${g.len}</span>
+            <h3>${g.name}</h3>
+            <p class="de">${g.de}</p>
+          </div>
+          <span class="g-tile">${ICONS[id]}</span>
+        </div>
+        <p class="what">${g.desc}</p>
+        <p class="outcome">${g.skill}</p>
+        <div class="links">
+          <button class="primary play"><i></i>Oyna</button>
+          <span class="best">${best != null ? 'Rekor: ' + best + ' puan' : 'Henüz oynanmadı'}</span>
+        </div>
+      </div>`);
+    li.style.setProperty('--i', i);
+    li.querySelector('.play').onclick = () => startGame(id);
+    gl.appendChild(li);
   });
 
   const bl = $('#badge-list');
   bl.innerHTML = '';
   BADGES.forEach((b) => {
     const has = state.badges.includes(b.id);
-    bl.appendChild(el('div', 'badge' + (has ? ' got' : ''), `<span class="medallion">${has ? `<span class="emoji">${b.icon}</span>` : UI_ICONS.lock}</span><b>${b.name}</b><small>${b.desc}</small>`));
+    bl.appendChild(el('div', 'stamp' + (has ? ' got' : ''), `<span class="seal-ring">${HAND_CIRCLE}${has ? `<span class="emoji">${b.icon}</span>` : UI_ICONS.lock}</span><b>${b.name}</b><small>${b.desc}</small>`));
   });
   show('screen-home');
 }
@@ -233,7 +246,7 @@ function finish() {
   const newLvl = levelOf(state.xp);
   $('#res-level').innerHTML = newLvl > oldLvl ? ` · <b>Seviye ${newLvl}!</b>` : '';
   countUp($('#res-xp'), xpGain);
-  $('#res-badges').innerHTML = earned.map((b) => `<div class="new-badge"><span class="medallion"><span class="emoji">${b.icon}</span></span><span>Yeni rozet<b>${b.name}</b></span></div>`).join('');
+  $('#res-badges').innerHTML = earned.map((b) => `<div class="new-badge"><span class="seal-ring">${HAND_CIRCLE}<span class="emoji">${b.icon}</span></span><span>Yeni rozet<b>${b.name}</b></span></div>`).join('');
   show('screen-result');
   if (stars >= 2 || earned.length) confetti();
 }
@@ -251,13 +264,14 @@ function countUp(node, to) {
 
 function confetti() {
   const c = $('#confetti');
-  const colors = ['var(--der)', 'var(--die)', 'var(--das)', 'var(--sun)', 'var(--ink)'];
+  const colors = ['var(--ink)', 'var(--ink)', 'var(--amber)', 'var(--amber)', 'var(--seal)'];
   for (let i = 0; i < 60; i++) {
     const p = el('i');
     p.style.left = Math.random() * 100 + 'vw';
     p.style.background = pick(colors);
     p.style.animationDelay = Math.random() * 0.6 + 's';
     p.style.transform = `rotate(${Math.random() * 360}deg)`;
+    if (Math.random() < .5) p.className = 'blot';
     c.appendChild(p);
   }
   setTimeout(() => { c.innerHTML = ''; }, 3200);
@@ -287,7 +301,8 @@ function choiceButtons(container, options, correct, onDone, render = (o) => o) {
 const GAMES = {
   // 1) Der-Die-Das: 60 saniyelik hız oyunu
   artikel: {
-    icon: '🎯', name: 'Artikel Avı', desc: 'der, die, das? 60 saniyede en çok doğruyu bul!',
+    name: 'Artikel Avı', de: 'Der, die oder das?', code: 'DER · DIE · DAS', len: '60 sn', skill: 'İsimlerin artikelini tanıyıp hızlıca seçebilme',
+    desc: 'Kelime ve resmi çıkar, doğru artikele bas. Üst üste doğrular seriyi büyütür; yanlışta kural ipucu gelir.',
     start(area, s) {
       let time = 60;
       let words = shuffle(wordPool());
@@ -350,7 +365,8 @@ const GAMES = {
 
   // 2) Hafıza kartları: Almanca kelime ↔ resim
   memory: {
-    icon: '🃏', name: 'Hafıza Kartları', desc: 'Almanca kelimeyi resmiyle eşleştir.',
+    name: 'Hafıza Kartları', de: 'Das Gedächtnisspiel', code: 'WORTSCHATZ', len: '6 çift', skill: 'Kelimeyi artikeli ve anlamıyla eşleştirebilme',
+    desc: 'Kartları çevir, Almanca kelimeyi resmiyle eşleştir. Ne kadar az hamle, o kadar çok yıldız.',
     start(area, s) {
       const words = shuffle(wordPool()).slice(0, 6);
       const cards = shuffle(words.flatMap((w, k) => [
@@ -401,7 +417,8 @@ const GAMES = {
 
   // 3) Dinle ve bul
   listen: {
-    icon: '👂', name: 'Hör zu!', desc: 'Kelimeyi dinle, doğru resmi seç.',
+    name: 'Hör zu!', de: 'Hör gut zu', code: 'HÖREN', len: '10 soru', skill: 'Duyduğu kelimeyi tanıyıp anlamını bulabilme',
+    desc: 'Max kelimeyi Almanca söyler, sen dört resimden doğrusunu seçersin. İstersen yavaş dinle.',
     start(area, s) {
       const ROUNDS = 10;
       const pool = shuffle(wordPool());
@@ -438,7 +455,8 @@ const GAMES = {
 
   // 4) Cümle treni: kelime vagonlarını doğru sıraya diz
   satz: {
-    icon: '🚂', name: 'Cümle Treni', desc: 'Vagonları sıraya diz, cümleyi kur.',
+    name: 'Cümle Treni', de: 'Der Satzzug', code: 'SATZBAU', len: '6 cümle', skill: 'Çekimli fiili ikinci sıraya koyarak cümle kurabilme',
+    desc: 'Türkçesi verilen cümlenin kelime vagonlarını sırayla trene tak. Doğruysa tren yola çıkar.',
     start(area, s) {
       const list = shuffle(sentencePool()).slice(0, 6);
       let r = 0;
@@ -491,7 +509,8 @@ const GAMES = {
 
   // 5) Fiil çekimi
   verb: {
-    icon: '🚀', name: 'Fiil Roketi', desc: 'Doğru fiil çekimini seç, roketi uçur!',
+    name: 'Fiil Roketi', de: 'Die Verbrakete', code: 'KONJUGATION', len: '10 soru', skill: 'Fiili kişi zamirine göre çekimleyebilme',
+    desc: 'Cümledeki boşluğa doğru fiil çekimini seç, roketi uçur. Yanlışta bütün çekim tablosu görünür.',
     start(area, s) {
       const ROUNDS = 10;
       let r = 0;
@@ -552,6 +571,8 @@ $('#btn-reset').onclick = (e) => {
 
 
 // ---------- Başlangıç ----------
+document.body.insertAdjacentHTML('afterbegin', INK_DEFS);
+$('#brushline').innerHTML = BRUSHLINE;
 document.querySelectorAll('[data-icon]').forEach((n) => { n.innerHTML = UI_ICONS[n.dataset.icon]; });
 $('#hero-max').innerHTML = maxSVG();
 const HERO_LINES = ['Hallo! Ich bin Max.', 'Los geht\'s!', 'Lernen macht Spaß!', 'Der, die oder das?', 'Wie geht\'s dir?'];

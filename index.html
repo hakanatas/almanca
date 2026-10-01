@@ -3,45 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#1d2b53">
+  <meta name="theme-color" content="#f1eadc">
   <title>Deutsch Macerası</title>
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@500&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div id="app">
     <!-- ANA EKRAN -->
     <section id="screen-home" class="screen active">
-      <header class="stage">
-        <div class="stage-sky" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="stage-text">
-          <p class="eyebrow">A1 · Almanca</p>
-          <h1>Deutsch<br><span>Macerası</span></h1>
-          <p class="bubble" id="hero-bubble">Hallo! Ich bin Max.</p>
+      <header class="hero">
+        <div class="kicker rise" style="--i:0"><span class="seal">D</span>Almanca · A1 · İkinci yabancı dil</div>
+        <h1 class="rise" style="--i:1">Deutsch Macerası<span class="dot"></span></h1>
+        <div class="hero-max" id="hero-max"></div>
+        <p class="bubble" id="hero-bubble">Hallo! Ich bin Max.</p>
+        <p class="lede rise" style="--i:2">Mürekkepten bir Dackel olan <b>Max</b> ile kelimeler, artikeller ve cümleler. Her oyun bir iki dakika sürer; teneffüste de oynanır, derse ısınırken de.</p>
+        <div class="rules rise" style="--i:3">
+          <span><i class="swatch der"></i>der · mavi mürekkep</span>
+          <span><i class="swatch die"></i>die · mühür kırmızısı</span>
+          <span><i class="swatch das"></i>das · yeşil mürekkep</span>
+          <span><i class="swatch amber"></i>kehribar: puan ve ipucu</span>
         </div>
-        <div class="stage-max" id="hero-max"></div>
-        <div class="stage-ground" aria-hidden="true"></div>
+        <div id="brushline"></div>
       </header>
 
-      <div class="stats">
-        <div class="stat s-level"><span class="s-ico" data-icon="star"></span><div><b id="p-level">1</b><small>Seviye</small></div></div>
-        <div class="stat s-streak"><span class="s-ico" data-icon="flame"></span><div><b id="p-streak">0</b><small>Gün serisi</small></div></div>
-        <div class="stat s-badge"><span class="s-ico" data-icon="medal"></span><div><b id="p-badges">0</b><small>Rozet</small></div></div>
-        <div class="xpbar" aria-label="Deneyim puanı"><div id="p-xpfill"></div><span id="p-xptext">0 / 50 XP</span></div>
+      <div class="ledger rise" style="--i:4">
+        <div class="tally"><small>Seviye</small><b id="p-level">1</b></div>
+        <div class="tally"><small>Gün serisi</small><b id="p-streak">0</b></div>
+        <div class="tally"><small>Rozet</small><b id="p-badges">0</b></div>
+        <div class="xpbar" aria-label="Deneyim puanı"><div id="p-xpfill"></div></div>
+        <small class="xptext" id="p-xptext">0 / 50 XP</small>
       </div>
 
-      <h2>Tema</h2>
-      <div id="theme-list" class="chips"></div>
+      <h2 class="section-title">Önce temayı seç</h2>
+      <p class="section-sub">Oyunlar seçtiğin temanın kelimeleriyle oynanır. "Hepsi" bütün temaları karıştırır.</p>
+      <div id="theme-list" class="themes" role="tablist" aria-label="Tema seçimi"></div>
 
-      <h2>Oyunlar</h2>
-      <div id="game-list" class="games"></div>
+      <h2 class="section-title">Sonra oyununu seç</h2>
+      <p class="section-sub">Yukarıdan aşağı gitmek iyi bir sıra: önce artikel ve kelime, en sonda cümle ve fiil.</p>
+      <ol id="game-list" class="journey"></ol>
 
-      <h2>Rozetler</h2>
-      <div id="badge-list" class="badges"></div>
+      <h2 class="section-title">Rozetler</h2>
+      <div id="badge-list" class="stamps"></div>
 
       <footer class="foot">
+        <span>Deutsch Macerası · A1 Almanca · İlerleme yalnızca bu cihazda saklanır.</span>
         <button class="link" id="btn-reset">İlerlemeyi sıfırla</button>
       </footer>
     </section>
@@ -61,10 +70,7 @@
     <!-- SONUÇ EKRANI -->
     <section id="screen-result" class="screen">
       <div class="result">
-        <div class="result-stage">
-          <div class="stage-sky" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <div id="res-mascot"></div>
-        </div>
+        <div class="res-max" id="res-mascot"></div>
         <div class="stars" id="res-stars"></div>
         <h2 id="res-title">Toll!</h2>
         <p id="res-text"></p>
@@ -72,7 +78,7 @@
         <div id="res-badges"></div>
         <div class="row">
           <button class="btn" id="btn-again">Tekrar oyna</button>
-          <button class="btn secondary" id="btn-home">Ana menü</button>
+          <button class="btn ghost" id="btn-home">Ana menü</button>
         </div>
       </div>
     </section>
