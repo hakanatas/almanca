@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cut">
+  <meta name="theme-color" content="#ffcc00">
+  <title>Deutsch Macerası</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ANA EKRAN -->
+    <section id="screen-home" class="screen active">
+      <header class="hero">
+        <div class="mascot" aria-hidden="true">🐕</div>
+        <div>
+          <h1>Deutsch Macerası</h1>
+          <p class="sub">Max ile Almanca öğren! <span class="flag">🇩🇪</span></p>
+        </div>
+      </header>
+
+      <div class="profile card">
+        <div class="stat"><span class="stat-icon">⭐</span><b id="p-level">1</b><small>Seviye</small></div>
+        <div class="stat"><span class="stat-icon">🔥</span><b id="p-streak">0</b><small>Gün serisi</small></div>
+        <div class="stat"><span class="stat-icon">🏅</span><b id="p-badges">0</b><small>Rozet</small></div>
+        <div class="xpbar" aria-label="Deneyim puanı"><div id="p-xpfill"></div><span id="p-xptext">0 / 50 XP</span></div>
+      </div>
+
+      <h2>1. Tema seç</h2>
+      <div id="theme-list" class="chips"></div>
+
+      <h2>2. Oyun seç</h2>
+      <div id="game-list" class="games"></div>
+
+      <h2>Rozetler</h2>
+      <div id="badge-list" class="badges"></div>
+
+      <footer class="foot">
+        <button class="link" id="btn-reset">İlerlemeyi sıfırla</button>
+      </footer>
+    </section>
+
+    <!-- OYUN EKRANI -->
+    <section id="screen-game" class="screen">
+      <div class="hud">
+        <button class="icon-btn" id="btn-quit" aria-label="Çık">✕</button>
+        <div class="progress"><div id="hud-progress"></div></div>
+        <div class="hud-info" id="hud-info"></div>
+        <div class="hud-score">⭐ <b id="hud-score">0</b></div>
+      </div>
+      <div id="game-area"></div>
+      <div id="feedback" class="feedback" hidden></div>
+    </section>
+
+    <!-- SONUÇ EKRANI -->
+    <section id="screen-result" class="screen">
+      <div class="result card">
+        <div class="mascot big" id="res-mascot">🐕</div>
+        <h2 id="res-title">Toll!</h2>
+        <div class="stars" id="res-stars"></div>
+        <p id="res-text"></p>
+        <p class="xp-gain" id="res-xp"></p>
+        <div id="res-badges"></div>
+        <div class="row">
+          <button class="btn" id="btn-again">🔁 Tekrar oyna</button>
+          <button class="btn secondary" id="btn-home">🏠 Ana menü</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="confetti" aria-hidden="true"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
