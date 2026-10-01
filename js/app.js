@@ -515,8 +515,19 @@ $('#btn-quit').onclick = () => {
 };
 $('#btn-home').onclick = renderHome;
 $('#btn-again').onclick = () => startGame(session.id);
-$('#btn-reset').onclick = () => {
-  if (confirm('Tüm ilerlemen (XP, rozetler, rekorlar) silinsin mi?')) { state = defaultState(); save(); renderHome(); }
+// confirm() bazı gömülü ortamlarda çalışmıyor → iki dokunuşla onay
+$('#btn-reset').onclick = (e) => {
+  const b = e.currentTarget;
+  if (b.dataset.armed) {
+    clearTimeout(b._t);
+    delete b.dataset.armed;
+    b.textContent = 'İlerlemeyi sıfırla';
+    state = defaultState(); save(); renderHome();
+    return;
+  }
+  b.dataset.armed = '1';
+  b.textContent = 'Emin misin? XP, rozet ve rekorlar silinecek — onaylamak için tekrar dokun';
+  b._t = setTimeout(() => { delete b.dataset.armed; b.textContent = 'İlerlemeyi sıfırla'; }, 4000);
 };
 
 renderHome();

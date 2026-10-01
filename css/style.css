@@ -14,16 +14,19 @@
   --bad: #dc2626;
   --shadow: 0 4px 0 rgba(0, 0, 0, .08);
   --radius: 18px;
+  --flag-a: #000; --flag-b: #dd0000; --flag-c: #e0a800;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #17151f; --card: #24212f; --text: #f3f4f6; --muted: #a1a1aa; --line: #34303f;
     --der: #60a5fa; --die: #f87171; --das: #4ade80; --shadow: 0 4px 0 rgba(0, 0, 0, .35);
+    --flag-a: #fff; --flag-b: #ff4d4d; --flag-c: #ffcc00; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #17151f; --card: #24212f; --text: #f3f4f6; --muted: #a1a1aa; --line: #34303f;
   --der: #60a5fa; --die: #f87171; --das: #4ade80; --shadow: 0 4px 0 rgba(0, 0, 0, .35);
+    --flag-a: #fff; --flag-b: #ff4d4d; --flag-c: #ffcc00; color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -53,8 +56,7 @@ small { color: var(--muted); }
 .mascot { font-size: 3.2rem; animation: wag 1.6s ease-in-out infinite; transform-origin: bottom center; }
 .mascot.big { font-size: 5rem; }
 @keyframes wag { 50% { transform: rotate(-8deg); } }
-.hero h1 { background: linear-gradient(90deg, #000 0 33%, var(--red) 33% 66%, #e0a800 66%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero h1 { background: linear-gradient(90deg, #fff 0 33%, #ff4d4d 33% 66%, var(--accent) 66%); -webkit-background-clip: text; background-clip: text; } }
+.hero h1 { background: linear-gradient(90deg, var(--flag-a) 0 33%, var(--flag-b) 33% 66%, var(--flag-c) 66%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
 .profile { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
 .stat b { display: block; font-size: 1.5rem; font-weight: 900; }
