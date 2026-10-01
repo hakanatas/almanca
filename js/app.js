@@ -113,20 +113,24 @@ function renderHome() {
   const tl = $('#theme-list');
   tl.innerHTML = '';
   [{ id: 'all', icon: '🌍', tr: 'Hepsi', de: 'Alles' }, ...THEMES].forEach((t) => {
-    const b = el('button', 'chip' + (state.theme === t.id ? ' on' : ''), `<span>${t.icon}</span> ${t.tr}<small>${t.de}</small>`);
+    const b = el('button', 'chip' + (state.theme === t.id ? ' on' : ''), `<span class="emoji">${t.icon}</span><span>${t.tr}<small>${t.de}</small></span>`);
     b.onclick = () => { state.theme = t.id; save(); renderHome(); };
     tl.appendChild(b);
   });
 
   const gl = $('#game-list');
   gl.innerHTML = '';
-  Object.entries(GAMES).forEach(([id, g]) => {
+  Object.entries(GAMES).forEach(([id, g], i) => {
     const best = state.best[id];
     const card = el('button', `game-card c-${id}`, `
-      <span class="g-icon">${g.icon}</span>
-      <span class="g-name">${g.name}</span>
-      <span class="g-desc">${g.desc}</span>
-      <span class="g-best">${best != null ? '🏆 Rekor: ' + best : 'Yeni!'}</span>`);
+      <span class="g-tile">${ICONS[id]}</span>
+      <span class="g-text">
+        <span class="g-name">${g.name}</span>
+        <span class="g-desc">${g.desc}</span>
+      </span>
+      <span class="g-best ${best != null ? '' : 'new'}">${best != null ? 'Rekor ' + best : 'Yeni'}</span>
+      <span class="g-go">${UI_ICONS.arrow}</span>`);
+    card.style.setProperty('--i', i);
     card.onclick = () => startGame(id);
     gl.appendChild(card);
   });
@@ -135,7 +139,7 @@ function renderHome() {
   bl.innerHTML = '';
   BADGES.forEach((b) => {
     const has = state.badges.includes(b.id);
-    bl.appendChild(el('div', 'badge' + (has ? ' got' : ''), `<span>${has ? b.icon : '🔒'}</span><b>${b.name}</b><small>${b.desc}</small>`));
+    bl.appendChild(el('div', 'badge' + (has ? ' got' : ''), `<span class="medallion">${has ? `<span class="emoji">${b.icon}</span>` : UI_ICONS.lock}</span><b>${b.name}</b><small>${b.desc}</small>`));
   });
   show('screen-home');
 }
@@ -177,9 +181,10 @@ function answer(ok, detail) {
   beep(ok);
   const fb = $('#feedback');
   fb.className = 'feedback ' + (ok ? 'ok' : 'bad');
-  fb.innerHTML = `<b>${ok ? '🐕 ' + pick(MASKOT_SOZLERI.dogru) : '🐕 ' + pick(MASKOT_SOZLERI.yanlis)}</b>`
-    + (session.combo >= 3 ? ` <span class="combo">🔥 x${session.combo}</span>` : '')
-    + (detail ? `<div>${detail}</div>` : '');
+  fb.innerHTML = `<div class="fb-max">${maxSVG(ok ? 'jump' : 'sad')}</div>
+    <div class="fb-text"><b>${pick(ok ? MASKOT_SOZLERI.dogru : MASKOT_SOZLERI.yanlis)}</b>`
+    + (session.combo >= 3 ? ` <span class="combo">${UI_ICONS.flame} x${session.combo}</span>` : '')
+    + (detail ? `<div>${detail}</div>` : '') + '</div>';
   fb.hidden = false;
   clearTimeout(answer.t);
   answer.t = setTimeout(() => { fb.hidden = true; }, ok ? 1100 : 2600);
@@ -220,21 +225,33 @@ function finish() {
 
   const titles = ['Weiter üben!', 'Gut gemacht!', 'Sehr gut!', 'Ausgezeichnet!'];
   $('#res-title').textContent = titles[stars];
-  $('#res-mascot').textContent = stars >= 2 ? '🐕‍🦺' : '🐕';
-  $('#res-stars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}">★</span>`).join('');
-  $('#res-text').innerHTML = `${s.total} sorudan <b>${s.correct}</b> doğru · Puan: <b>${s.score}</b>`
-    + (newRecord && s.score > 0 ? '<br>🏆 Yeni rekor!' : '')
-    + (s.maxCombo >= 3 ? `<br>En uzun seri: 🔥 ${s.maxCombo}` : '');
+  $('#res-mascot').innerHTML = maxSVG(stars >= 1 ? 'jump' : 'sad');
+  $('#res-stars').innerHTML = [0, 1, 2].map((i) => `<span class="${i < stars ? 'on' : ''}" style="--d:${0.25 + i * 0.22}s">${UI_ICONS.star}</span>`).join('');
+  $('#res-text').innerHTML = `${s.total} sorudan <b>${s.correct}</b> doğru · <b>${s.score}</b> puan`
+    + (newRecord && s.score > 0 ? '<span class="pill gold">Yeni rekor</span>' : '')
+    + (s.maxCombo >= 3 ? `<span class="pill">En uzun seri ${s.maxCombo}</span>` : '');
   const newLvl = levelOf(state.xp);
-  $('#res-xp').innerHTML = `+${xpGain} XP` + (newLvl > oldLvl ? ` · <b>Seviye ${newLvl}! 🎊</b>` : '');
-  $('#res-badges').innerHTML = earned.map((b) => `<div class="new-badge">${b.icon} Yeni rozet: <b>${b.name}</b></div>`).join('');
+  $('#res-level').innerHTML = newLvl > oldLvl ? ` · <b>Seviye ${newLvl}!</b>` : '';
+  countUp($('#res-xp'), xpGain);
+  $('#res-badges').innerHTML = earned.map((b) => `<div class="new-badge"><span class="medallion"><span class="emoji">${b.icon}</span></span><span>Yeni rozet<b>${b.name}</b></span></div>`).join('');
   show('screen-result');
   if (stars >= 2 || earned.length) confetti();
 }
 
+function countUp(node, to) {
+  const t0 = performance.now(), dur = 900;
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / dur);
+    node.textContent = '+' + Math.round(to * (1 - (1 - k) ** 3));
+    if (k < 1) requestAnimationFrame(step);
+  };
+  node.textContent = '+0';
+  requestAnimationFrame(step);
+}
+
 function confetti() {
   const c = $('#confetti');
-  const colors = ['#000', '#dd0000', '#ffcc00', '#3b82f6', '#22c55e'];
+  const colors = ['var(--der)', 'var(--die)', 'var(--das)', 'var(--sun)', 'var(--ink)'];
   for (let i = 0; i < 60; i++) {
     const p = el('i');
     p.style.left = Math.random() * 100 + 'vw';
@@ -276,17 +293,17 @@ const GAMES = {
       let words = shuffle(wordPool());
       let i = 0;
       const info = $('#hud-info');
-      info.textContent = '⏱ 60';
+      info.textContent = '60 sn';
       const timer = setInterval(() => {
         time--;
-        info.textContent = '⏱ ' + time;
+        info.textContent = time + ' sn';
         setProgress((60 - time) / 60);
         if (time <= 0) finish();
       }, 1000);
       s.cleanup = () => clearInterval(timer);
 
       area.innerHTML = `
-        <div class="prompt big-word">
+        <div class="prompt big-word enter">
           <div class="emoji" id="a-emoji"></div>
           <div class="word"><span class="blank" id="a-blank">?</span> <span id="a-word"></span></div>
           <div class="tr" id="a-tr"></div>
@@ -296,12 +313,14 @@ const GAMES = {
           <button class="art die" data-a="die">die</button>
           <button class="art das" data-a="das">das</button>
         </div>
-        <p class="hint">Renk kodu: <b class="t-der">der = mavi</b>, <b class="t-die">die = kırmızı</b>, <b class="t-das">das = yeşil</b></p>`;
+        <p class="hint"><b class="t-der">der</b> mavi · <b class="t-die">die</b> kırmızı · <b class="t-das">das</b> yeşil</p>`;
       let busy = false;
       const next = () => {
         if (i >= words.length) { words = shuffle(wordPool()); i = 0; }
         const w = words[i++];
         s.word = w;
+        const card = area.querySelector('.prompt');
+        card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter');
         $('#a-emoji').textContent = w.e;
         $('#a-word').textContent = w.de;
         $('#a-tr').textContent = w.tr;
@@ -321,7 +340,7 @@ const GAMES = {
           blank.textContent = w.art;
           blank.className = 'blank filled t-' + w.art;
           speak(`${w.art} ${w.de}`);
-          answer(ok, ok ? '' : `Doğrusu: <b class="t-${w.art}">${w.art} ${w.de}</b><br><small>💡 ${artikelTipp(w)}</small>`);
+          answer(ok, ok ? '' : `Doğrusu: <b class="t-${w.art}">${w.art} ${w.de}</b><br><small>İpucu: ${artikelTipp(w)}</small>`);
           later(s, next, ok ? 450 : 1500);
         };
       });
@@ -341,7 +360,7 @@ const GAMES = {
       let open = [];
       let found = 0;
       let moves = 0;
-      $('#hud-info').textContent = '🃏 0 hamle';
+      $('#hud-info').textContent = '0 hamle';
       const grid = el('div', 'memory');
       cards.forEach((c) => {
         const b = el('button', 'mcard', `<div class="back">?</div><div class="front ${c.type}">${c.html}</div>`);
@@ -352,7 +371,7 @@ const GAMES = {
           open.push({ b, c });
           if (open.length === 2) {
             moves++;
-            $('#hud-info').textContent = `🃏 ${moves} hamle`;
+            $('#hud-info').textContent = `${moves} hamle`;
             const [x, y] = open;
             if (x.c.k === y.c.k) {
               found++;
@@ -396,10 +415,11 @@ const GAMES = {
         const opts = shuffle([w, ...others]);
         area.innerHTML = '';
         const p = el('div', 'prompt');
-        const play = el('button', 'speaker', '🔊');
+        const play = el('button', 'speaker', ICONS.listen);
+        play.setAttribute('aria-label', 'Tekrar dinle');
         play.onclick = () => speak(`${w.art} ${w.de}`);
         p.appendChild(play);
-        const slow = el('button', 'link', '🐢 Yavaş dinle');
+        const slow = el('button', 'link', 'Yavaş dinle');
         slow.onclick = () => speak(`${w.art} ${w.de}`, 0.55);
         p.appendChild(slow);
         if (!canSpeak) p.appendChild(el('p', 'hint', `Tarayıcın sesi desteklemiyor. Kelime: <b>${w.art} ${w.de}</b>`));
@@ -432,11 +452,11 @@ const GAMES = {
         while (tokens.length > 1 && tokens.every((x, i) => x.t === sent.de[i])) tokens = shuffle(tokens);
         const placed = [];
         area.innerHTML = `
-          <div class="prompt"><div class="tr big">🇹🇷 ${sent.tr}</div></div>
-          <div class="train" id="train"><span class="loco">🚂</span></div>
+          <div class="prompt"><p class="eyebrow">Almancaya çevir</p><div class="tr big">${sent.tr}</div></div>
+          <div class="train" id="train"><span class="loco">${ICONS.satz}</span></div>
           <div class="wagons" id="wagons"></div>
-          <div class="row"><button class="btn" id="check" disabled>Kontrol et ✔</button></div>
-          <p class="hint">💡 Düz cümlede çekimli fiil hep <b>2. sırada</b> olur. Soru cümlesinde başa geçer.</p>`;
+          <div class="row"><button class="btn" id="check" disabled>Kontrol et</button></div>
+          <p class="hint">İpucu: düz cümlede çekimli fiil hep <b>2. sırada</b> olur. Soru cümlesinde başa geçer.</p>`;
         const draw = () => {
           const train = $('#train'), wag = $('#wagons');
           train.querySelectorAll('.wagon').forEach((n) => n.remove());
@@ -487,7 +507,7 @@ const GAMES = {
         const subj = p === 0 ? 'Ich' : PRONOUNS[p][0].toUpperCase() + PRONOUNS[p].slice(1);
         area.innerHTML = `
           <div class="prompt">
-            <div class="rocket" id="rocket">🚀</div>
+            <div class="rocket" id="rocket">${ICONS.verb}</div>
             <div class="word">${subj} <span class="blank">?</span> ${v.obj}.</div>
             <div class="tr"><b>${v.inf}</b> = ${v.tr} · <i>${PRONOUNS[p]}</i> = ${PRONOUN_TR[p]}</div>
           </div>`;
@@ -529,5 +549,20 @@ $('#btn-reset').onclick = (e) => {
   b.textContent = 'Emin misin? XP, rozet ve rekorlar silinecek — onaylamak için tekrar dokun';
   b._t = setTimeout(() => { delete b.dataset.armed; b.textContent = 'İlerlemeyi sıfırla'; }, 4000);
 };
+
+
+// ---------- Başlangıç ----------
+document.querySelectorAll('[data-icon]').forEach((n) => { n.innerHTML = UI_ICONS[n.dataset.icon]; });
+$('#hero-max').innerHTML = maxSVG();
+const HERO_LINES = ['Hallo! Ich bin Max.', 'Los geht\'s!', 'Lernen macht Spaß!', 'Der, die oder das?', 'Wie geht\'s dir?'];
+let heroLine = 0;
+setInterval(() => {
+  const b = $('#hero-bubble');
+  if (!b || !$('#screen-home').classList.contains('active')) return;
+  heroLine = (heroLine + 1) % HERO_LINES.length;
+  b.classList.remove('say'); void b.offsetWidth;
+  b.textContent = HERO_LINES[heroLine];
+  b.classList.add('say');
+}, 4000);
 
 renderHome();
