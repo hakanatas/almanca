@@ -80,11 +80,6 @@ function maxSVG(extraClass = '') {
 
 // Mürekkep çizimi oyun ikonları: siyah kontür, kehribar vurgu.
 const ICONS = {
-  run: `<svg viewBox="0 0 48 48" aria-hidden="true">
-    <circle cx="36" cy="10" r="6" class="i-soft"/><circle cx="36" cy="22" r="6" class="i-main"/><circle cx="36" cy="34" r="6" class="i-soft"/>
-    <path d="M6 30 q6 -16 14 -4" class="i-line" stroke-width="2.4" stroke-dasharray="3 4"/>
-    <ellipse cx="22" cy="31" rx="9" ry="5" class="i-ink"/>
-    <path d="M2 43 C14 42 30 44 46 43" class="i-line" stroke-width="2"/></svg>`,
   ninja: `<svg viewBox="0 0 48 48" aria-hidden="true">
     <rect x="6" y="20" width="18" height="13" rx="3" class="i-soft" transform="rotate(-18 15 26)"/>
     <rect x="24" y="22" width="18" height="13" rx="3" class="i-main" transform="rotate(14 33 28)"/>
@@ -101,13 +96,6 @@ const ICONS = {
     <path d="M6 38 H24 Q32 38 32 30 V18 Q32 10 40 10" stroke="var(--das)" stroke-width="5.5" stroke-linecap="round" fill="none"/>
     <circle cx="41" cy="9" r="2" class="i-paper"/>
     <rect x="8" y="12" width="12" height="12" rx="2" class="i-paper"/></svg>`,
-  hunt: `<svg viewBox="0 0 48 48" aria-hidden="true">
-    <path d="M44 4 L27 19" class="i-line" stroke-width="5" stroke-linecap="round" opacity=".35"/>
-    <circle cx="21" cy="24" r="10" class="i-soft"/>
-    <circle cx="18" cy="21" r="2.6" class="i-paper"/><circle cx="24" cy="28" r="1.8" class="i-paper"/>
-    <path d="M10 46 L21 26" class="i-line" stroke-width="2.4"/>
-    <path d="M6 40 L10 46 L14 40 Z" class="i-ink"/>
-    <path d="M38 30 l2 4 4 .5-3 3 .8 4-3.8-2-3.8 2 .8-4-3-3 4-.5Z" class="i-main"/></svg>`,
   artikel: `<svg viewBox="0 0 48 48" aria-hidden="true">
     <circle cx="22" cy="26" r="17" class="i-soft"/><circle cx="22" cy="26" r="10.5" class="i-main"/><circle cx="22" cy="26" r="4" class="i-ink"/>
     <path d="M22 26 L40 8" class="i-line" stroke-width="2.6"/>

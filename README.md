@@ -42,10 +42,6 @@ python3 -m http.server 8000   # → http://localhost:8000
 
 **Atari oyunları** (`js/arcade.js`, tuval üzerinde; Max gardırobuyla birlikte oynar):
 
-- **🏃 Artikel Koşusu** — yandan görünüşlü sonsuz koşu. Taşların üstünden zıpla, kuşların altından
-  geç, altın topla. Artikel kapısında üst üste üç balon var (der/die/das, sırası her seferinde
-  değişir): yerde kal = alt, zıpla = orta, havada bir daha zıpla = üst balon. Kalkan, can ve
-  çift puan yıldızı; rekor mesafede bayrak.
 - **🥷 Artikel Ninja** — kelime kartları havaya fırlar; parmağınla yalnızca üstte yazan artikeldekileri
   kes. Yanlış artikeli ya da bombayı kesmek can götürür; tek hamlede birkaç kelime = kombo.
   Hedef artikel 11-15 saniyede bir değişir.
@@ -56,10 +52,6 @@ python3 -m http.server 8000   # → http://localhost:8000
 
 Diğer oyunlar:
 
-- **☄️ Kelime Avcısı** — uzay atari oyunu. Üstte Türkçe kelime yazar; yukarıdan düşen
-   meteorlarda Almancası (artikeliyle) var. Doğru meteoru vur, lazer onu patlatsın. Yanlışı
-   vurmak ya da doğruyu kaçırmak bir can götürür (3 can). Her 5 isabette seviye atlanır,
-   meteorlar hızlanır ve çoğalır.
 - **🎯 Artikel Avı** — 60 saniye. Kelime ve resmi çıkar, *der / die / das*
    butonlarından birine bas. Üst üste doğrular kombo puanı verir (x2'ye kadar bonus).
 - **🃏 Hafıza Kartları** — 6 çift kart. Almanca kelime kartını resim kartıyla eşleştir.
@@ -304,7 +296,7 @@ yedek olarak kullanılabilir: `python3 tools/generate_audio.py --engine piper --
 - [x] Okul hesabıyla giriş, çalışma kaydı ve yönetici rapor paneli
 - [x] **Sınıf ve şube** bilgisi (öğretmenin yüklediği sınıf listesi)
 - [x] **Sınıf Düellosu:** Öğretmen bir kod paylaşır, öğrenciler aynı anda yarışır
-- [x] Kelime Avcısı, Max'in Gardırobu ve Haftalık Sınıf Ligi
+- [x] Atari oyunları (Ninja, Uçan Max, Yılan), Max'in Gardırobu ve Haftalık Sınıf Ligi
 - [ ] **Aralıklı tekrar (spaced repetition):** Yanlış yapılan kelimeler daha sık sorulsun
 - [ ] **Konuşma oyunu:** Mikrofonla kelimeyi söyle, konuşma tanıma ile kontrol et
 - [ ] **Çoğul hali (Plural)** ve **akkusativ** (einen/eine/ein) mini oyunları
