@@ -67,3 +67,20 @@ tbody tr:last-child td { border-bottom: 0; }
 
 #detail { padding: 18px; border-radius: 12px; background: rgba(255, 252, 244, .4); box-shadow: 0 0 0 2px var(--ink); }
 .admin .okul-admin { display: none; }
+
+/* Sınıflar ve sınıf listesi */
+#t-classes tbody tr { cursor: pointer; }
+#t-classes tbody tr:hover, #t-classes tbody tr:focus-visible { background: var(--amber-wash); outline: none; }
+#t-classes tbody tr.sel { background: var(--amber-wash); box-shadow: inset 4px 0 0 var(--amber); }
+td.n small { display: block; }
+.pill { display: inline-block; font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; padding: 3px 9px; border-radius: 4px; background: var(--amber-wash); color: var(--amber-deep); margin: 2px 0; }
+.roster .r-current { font-size: 15px; }
+.r-input { display: grid; gap: 8px; }
+.r-label { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+#r-text { width: 100%; font-family: var(--mono); font-size: 13px; line-height: 1.5; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 8px; background: var(--paper-hi); color: var(--ink); resize: vertical; }
+#r-text:focus-visible { outline: 3px solid var(--amber); outline-offset: 1px; }
+.file-btn { position: relative; overflow: hidden; cursor: pointer; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.row.left .status { margin: 0; align-self: center; }
+.table-wrap.short { max-height: 280px; overflow: auto; margin-top: 8px; }
+#r-preview p { margin: 10px 0 0; }

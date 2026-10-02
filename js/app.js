@@ -47,6 +47,8 @@ const okul = (fn, arg) => { try { if (window.Okul) return Okul[fn](arg); } catch
 const levelOf = (xp) => Math.floor(Math.sqrt(xp / 50)) + 1;
 const xpFor = (lvl) => 50 * (lvl - 1) ** 2;
 
+const el_ = (...a) => el(...a);
+
 // ---------- Ses ----------
 let audioCtx;
 function beep(ok) {
@@ -68,6 +70,16 @@ function beep(ok) {
 }
 
 // Seslendirme: önce önceden kaydedilmiş dosya (js/audio.js → AUDIO_CLIPS), yoksa tarayıcı sesi.
+function beepCoin() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t = audioCtx.currentTime;
+    o.type = 'square'; o.frequency.setValueAtTime(988, t); o.frequency.setValueAtTime(1319, t + 0.05);
+    g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(g).connect(audioCtx.destination); o.start(t); o.stop(t + 0.13);
+  } catch (e) { /* ses yok */ }
+}
+
 const canSpeak = 'speechSynthesis' in window;
 const CLIPS = typeof AUDIO_CLIPS !== 'undefined' ? AUDIO_CLIPS : {};
 const hasClip = (text) => Object.prototype.hasOwnProperty.call(CLIPS, text);
@@ -212,7 +224,8 @@ function setProgress(p) { $('#hud-progress').style.width = `${Math.min(100, p * 
 function addScore(n) { session.score += n; $('#hud-score').textContent = session.score; }
 
 // Doğru/yanlış kaydı + kısa geri bildirim
-function answer(ok, detail, item) {
+// opts.quiet: hızlı oyunlarda alttaki bildirim kutusu gösterilmez (ses ve puan yine işler)
+function answer(ok, detail, item, opts = {}) {
   session.total++;
   if (item) okul('record', { ...item, ok });
   if (ok) {
@@ -225,6 +238,7 @@ function answer(ok, detail, item) {
     session.combo = 0;
   }
   beep(ok);
+  if (opts.quiet) return;
   const fb = $('#feedback');
   fb.className = 'feedback ' + (ok ? 'ok' : 'bad');
   fb.innerHTML = `<div class="fb-max">${maxSVG(ok ? 'jump' : 'sad')}</div>
@@ -262,13 +276,14 @@ function finish() {
   const earned = [];
   const give = (id) => { if (!state.badges.includes(id)) { state.badges.push(id); earned.push(BADGES.find((b) => b.id === id)); } };
   give('ilk');
-  if (s.id === 'artikel' && s.maxCombo >= 10) give('kombo10');
+  if ((s.id === 'artikel' || s.id === 'run') && s.maxCombo >= 10) give('kombo10');
   if (s.total >= 5 && s.mistakes === 0) give('mukemmel');
   if (Object.keys(GAMES).every((g) => state.played[g])) give('kasif');
   if (state.streak >= 3) give('seri3');
   if (levelOf(state.xp) >= 5) give('seviye5');
   save();
-  okul('endSession', { completed: true, score: s.score });
+  const ended = okul('endSession', { completed: true, score: s.score });
+  if (ended && ended.then) ended.then(() => renderMyWork());
 
   const titles = ['Weiter üben!', 'Gut gemacht!', 'Sehr gut!', 'Ausgezeichnet!'];
   $('#res-title').textContent = titles[stars];
@@ -333,6 +348,158 @@ function choiceButtons(container, options, correct, onDone, render = (o) => o) {
 
 // ---------- OYUNLAR ----------
 const GAMES = {
+  // 0) Artikel Koşusu: sonsuz koşu. Kelime kapısı gelmeden doğru artikel şeridine geç.
+  run: {
+    name: 'Artikel Koşusu', de: 'Der Artikel-Lauf', code: 'DER · DIE · DAS', len: '3 can', skill: 'Artikeli hızlı ve otomatik tanıyabilme',
+    desc: 'Max koşuyor! Kelime kapısı gelmeden doğru şeride geç: der, die ya da das. Hızlandıkça puan katlanır; kalkan ve kalp topla.',
+    start(area, s) {
+      const ARTS = ['der', 'die', 'das'];
+      const MAX_X = 0.26;                 // Max'in ekrandaki yatay konumu (genişliğe oran)
+      let lane = 1, lives = 3, shield = false, passed = 0;
+      let travel = 4.2;                   // bir kapının ekranı geçme süresi (sn); doğru bildikçe azalır
+      let words = shuffle(wordPool()), wi = 0;
+      let objs = [], nextGateIn = 0.6, nextItemIn = 2.2, last = 0, raf = 0, over = false, groundX = 0;
+
+      area.innerHTML = `
+        <div class="runner" id="runner" tabindex="0" aria-label="Koşu alanı: yukarı/aşağı okla şerit değiştir">
+          ${ARTS.map((a, i) => `<div class="lane lane-${a}" data-lane="${i}"><span class="lane-tag t-${a}">${a}</span></div>`).join('')}
+          <div class="runner-max" id="rmax">${maxSVG('run')}</div>
+          <div class="runner-objs" id="robjs"></div>
+          <div class="runner-msg" id="rmsg" hidden></div>
+        </div>
+        <div class="art-buttons runner-buttons">
+          ${ARTS.map((a, i) => `<button class="art ${a}" data-lane="${i}">${a}</button>`).join('')}
+        </div>
+        <p class="hint">Düğmeye bas, şeride dokun ya da ↑ ↓ okları. Doğru şeritte kapıdan geç!</p>`;
+      const runner = $('#runner'), rmax = $('#rmax'), robjs = $('#robjs');
+      const hearts = () => { $('#hud-info').innerHTML = `<span class="hearts">${'❤️'.repeat(lives)}${'🤍'.repeat(3 - lives)}${shield ? '🛡️' : ''}</span>`; };
+      hearts();
+      const W = () => runner.clientWidth;
+      const laneTop = (i) => `calc(${i} * 100% / 3)`;
+      const setLane = (i) => {
+        if (over) return;
+        lane = Math.max(0, Math.min(2, i));
+        rmax.style.top = laneTop(lane);
+        area.querySelectorAll('.runner-buttons .art').forEach((b) => b.classList.toggle('on', Number(b.dataset.lane) === lane));
+      };
+      setLane(1);
+      area.querySelectorAll('[data-lane]').forEach((el) => el.addEventListener('pointerdown', (e) => { e.preventDefault(); setLane(Number(el.dataset.lane)); }));
+      const onKey = (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'w') { setLane(lane - 1); e.preventDefault(); }
+        else if (e.key === 'ArrowDown' || e.key === 's') { setLane(lane + 1); e.preventDefault(); }
+        else if (['1', '2', '3'].includes(e.key)) setLane(Number(e.key) - 1);
+      };
+      document.addEventListener('keydown', onKey);
+      let touchY = null;
+      runner.addEventListener('touchstart', (e) => { touchY = e.touches[0].clientY; }, { passive: true });
+      runner.addEventListener('touchend', (e) => {
+        if (touchY == null) return;
+        const dy = e.changedTouches[0].clientY - touchY; touchY = null;
+        if (Math.abs(dy) > 30) setLane(lane + (dy > 0 ? 1 : -1));
+      });
+
+      const spawnGate = () => {
+        if (wi >= words.length) { words = shuffle(wordPool()); wi = 0; }
+        const w = words[wi++];
+        const gold = passed > 4 && Math.random() < 0.12;
+        const el = el_('div', 'rgate' + (gold ? ' gold' : ''), `
+          <div class="rgate-card"><span class="emoji">${w.e}</span><b>${w.de}</b><small>${w.tr}</small></div>
+          ${ARTS.map((a, i) => `<i class="rgate-door door-${a}" style="top:${laneTop(i)}"></i>`).join('')}`);
+        robjs.appendChild(el);
+        objs.push({ kind: 'gate', w, gold, el, x: 1.05 });
+      };
+      const spawnItem = () => {
+        const r = Math.random();
+        const kind = r < 0.12 && lives < 3 ? 'heart' : r < 0.24 && !shield ? 'shield' : 'coin';
+        const ln = Math.floor(Math.random() * 3);
+        const el = el_('div', 'pickup ' + kind, kind === 'heart' ? '❤' : kind === 'shield' ? '🛡' : '');
+        el.style.top = laneTop(ln);
+        robjs.appendChild(el);
+        objs.push({ kind, lane: ln, el, x: 1.05 });
+      };
+      const flash = (text, cls) => {
+        const m = $('#rmsg'); m.innerHTML = text; m.className = 'runner-msg ' + cls; m.hidden = false;
+        clearTimeout(flash.t); flash.t = setTimeout(() => { m.hidden = true; }, cls === 'bad' ? 1400 : 700);
+      };
+
+      const hitGate = (o) => {
+        const want = ARTS.indexOf(o.w.art), ok = lane === want;
+        const item = { q: o.w.de, expected: o.w.art, given: ARTS[lane] };
+        o.el.classList.add(ok ? 'pass' : 'fail');
+        o.el.querySelector(`.door-${o.w.art}`).classList.add('right');
+        speak(`${o.w.art} ${o.w.de}`, 1);
+        if (ok) {
+          answer(true, '', item, { quiet: true });
+          if (o.gold) addScore(20);
+          if (session.combo > 0 && session.combo % 5 === 0) addScore(10 * (session.combo / 5));
+          travel = Math.max(1.7, travel - 0.11);
+          flash(o.gold ? `+${o.gold ? 'x2 ' : ''}${o.w.art} ${o.w.de}` : `${o.w.art} ${o.w.de}` + (session.combo >= 3 ? ` · 🔥${session.combo}` : ''), 'ok');
+          rmax.firstElementChild.classList.add('jump'); setTimeout(() => rmax.firstElementChild && rmax.firstElementChild.classList.remove('jump'), 700);
+        } else if (shield) {
+          shield = false; hearts();
+          answer(false, '', item, { quiet: true });
+          flash(`🛡 Kalkan korudu! Doğrusu: <b class="t-${o.w.art}">${o.w.art}</b> ${o.w.de}`, 'bad');
+        } else {
+          lives--; hearts();
+          answer(false, '', item, { quiet: true });
+          travel = Math.min(4.2, travel + 0.35);
+          flash(`Doğrusu: <b class="t-${o.w.art}">${o.w.art}</b> ${o.w.de}`, 'bad');
+          runner.classList.remove('hurt'); void runner.offsetWidth; runner.classList.add('hurt');
+          if (lives <= 0) end();
+        }
+        passed++;
+        setProgress(Math.min(1, passed / 40));
+      };
+      const pickUp = (o) => {
+        if (o.lane !== lane) return false;
+        if (o.kind === 'coin') { addScore(2); beepCoin(); }
+        else if (o.kind === 'heart') { lives = Math.min(3, lives + 1); hearts(); flash('❤ +1 can', 'ok'); }
+        else if (o.kind === 'shield') { shield = true; hearts(); flash('🛡 Kalkan!', 'ok'); }
+        o.el.classList.add('got');
+        return true;
+      };
+
+      const frame = (t) => {
+        if (over) return;
+        const dt = Math.min(0.05, last ? (t - last) / 1000 : 0); last = t;
+        const v = 1 / travel;                               // ekran genişliği / sn
+        groundX = (groundX + v * dt * W()) % 48;
+        runner.style.setProperty('--ground', `${-groundX}px`);
+        nextGateIn -= dt; nextItemIn -= dt;
+        if (nextGateIn <= 0) { spawnGate(); nextGateIn = travel * 0.62 + Math.random() * 0.3; }
+        if (nextItemIn <= 0) { spawnItem(); nextItemIn = travel * (0.35 + Math.random() * 0.4); }
+        objs = objs.filter((o) => {
+          o.x -= v * dt;
+          o.el.style.transform = `translateX(${o.x * W()}px)`;
+          if (!o.done && o.x <= MAX_X + 0.04) {
+            o.done = true;
+            if (o.kind === 'gate') hitGate(o); else if (pickUp(o)) { o.el.remove(); return false; }
+          }
+          if (o.x < -0.25) { o.el.remove(); return false; }
+          return true;
+        });
+        raf = requestAnimationFrame(frame);
+      };
+      const end = () => {
+        over = true;
+        cancelAnimationFrame(raf);
+        rmax.firstElementChild.classList.add('sad');
+        later(s, finish, 1300);
+      };
+      s.cleanup = () => { over = true; cancelAnimationFrame(raf); document.removeEventListener('keydown', onKey); };
+      runner.focus({ preventScroll: true });
+      // Kısa geri sayım: 3-2-1
+      let n = 3;
+      flash('<b class="count">3</b>', 'count');
+      const tick = setInterval(() => {
+        n--;
+        if (session !== s || !s.active) { clearInterval(tick); return; }
+        if (n > 0) flash(`<b class="count">${n}</b>`, 'count');
+        else { clearInterval(tick); flash('Los!', 'count'); raf = requestAnimationFrame(frame); }
+      }, 650);
+    },
+  },
+
   // 1) Der-Die-Das: 60 saniyelik hız oyunu
   artikel: {
     name: 'Artikel Avı', de: 'Der, die oder das?', code: 'DER · DIE · DAS', len: '60 sn', skill: 'İsimlerin artikelini tanıyıp hızlıca seçebilme',
@@ -617,6 +784,43 @@ $('#btn-reset').onclick = (e) => {
 };
 
 
+// ---------- Çalışmalarım (yalnızca okul hesabıyla girişte) ----------
+const escH = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+async function renderMyWork() {
+  const box = $('#my-work');
+  if (!box || !window.Okul || Okul.demo || !Okul.user || Okul.user.uid === 'local' || Okul.user.kind !== 'ogrenci') return;
+  let list;
+  try { list = await Okul.mySessions('almanca', 40); } catch (e) { console.warn('Çalışmalar okunamadı', e); return; }
+  box.hidden = false;
+  const name = (g) => (GAMES[g] ? GAMES[g].name : g);
+  const fmtSure = (sec) => (sec >= 60 ? `${Math.round(sec / 60)} dk` : `${Math.round(sec)} sn`);
+  const weekAgo = Date.now() - 7 * 86400000;
+  const week = list.filter((x) => x.endedAt && x.endedAt.getTime() >= weekAgo);
+  const sum = (arr, k) => arr.reduce((a, x) => a + (x[k] || 0), 0);
+  const wTotal = sum(week, 'total'), wCorrect = sum(week, 'correct');
+  $('#my-summary').innerHTML = list.length
+    ? `<div><small>Bu hafta</small><b>${fmtSure(sum(week, 'durationSec'))}</b></div>
+       <div><small>Oyun</small><b>${week.length}</b></div>
+       <div><small>Doğruluk</small><b>${wTotal ? '%' + Math.round((wCorrect / wTotal) * 100) : '–'}</b></div>`
+    : '<p class="hint">Henüz kayıtlı oyunun yok. Bir oyun bitirdiğinde burada görünecek.</p>';
+  $('#my-list').innerHTML = list.slice(0, 8).map((x) => `<li>
+      <span class="my-game">${escH(name(x.game))}</span>
+      <span class="my-meta">${x.endedAt ? x.endedAt.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : ''} · ${fmtSure(x.durationSec || 0)}${x.completed ? '' : ' · yarıda'}</span>
+      <span class="my-score">${Number(x.correct) || 0}/${Number(x.total) || 0}</span></li>`).join('');
+  // En çok yanlış yapılan sorular (son 40 oyun)
+  const by = new Map();
+  list.forEach((x) => (x.items || []).forEach((it) => {
+    if (it.ok) return;
+    const k = `${x.game}|${it.q}|${it.expected}`;
+    const r = by.get(k) || { q: it.q, expected: it.expected, given: it.given, n: 0 };
+    r.n++; by.set(k, r);
+  }));
+  const missed = [...by.values()].sort((a, b) => b.n - a.n).slice(0, 6);
+  $('#my-missed').innerHTML = missed.length
+    ? missed.map((m) => `<li><b>${escH(m.q)}</b> → <span class="my-ok">${escH(m.expected)}</span><small>Senin cevabın: ${escH(m.given || '–')} · ${m.n} kez</small></li>`).join('')
+    : '<li class="hint">Yanlışın yok, harika!</li>';
+}
+
 // ---------- Başlangıç ----------
 document.body.insertAdjacentHTML('afterbegin', INK_DEFS);
 $('#brushline').innerHTML = BRUSHLINE;
@@ -638,7 +842,14 @@ renderHome();
 // Giriş tamamlanınca o hesabın ilerlemesini yükle. okul.js bir modül olduğu için bu
 // dosyadan sonra çalışır; hazır olduğunda window.Okul tanımlanır.
 (function waitForOkul(tries = 0) {
-  if (window.Okul) Okul.onReady((u, progress) => useProfile(u.uid, progress.almanca));
+  if (window.Okul) Okul.onReady((u, progress) => {
+    useProfile(u.uid, progress.almanca); renderMyWork();
+    const card = $('#duel-card');
+    if (card && !Okul.demo) {
+      card.hidden = false;
+      if (u.admin) { $('#duel-card-sub').textContent = 'Tahtaya kod yansıt, sınıf telefonlarla canlı yarışsın.'; $('#duel-card-go').textContent = 'Düello aç →'; }
+    }
+  });
   else if (tries < 100) setTimeout(() => waitForOkul(tries + 1), 50);
   else useProfile('local', null); // modül yüklenemedi: yerel kayıtla devam
 })();

@@ -27,6 +27,60 @@ service cloud.firestore {
       allow list, write: if false;
     }
 
+    // Sınıf listesi: belge kimliği öğrencinin e-postası (küçük harf), içinde sınıf ve ad.
+    // Öğretmenin verdiği listeden rapor panelinde yüklenir; yalnızca yöneticiler okur ve yazar.
+    match /sinif_listesi/{email} {
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['sinif', 'ad', 'guncelleyen', 'guncelleme'])
+        && request.resource.data.sinif is string
+        && request.resource.data.sinif.size() > 0 && request.resource.data.sinif.size() <= 20
+        && (!('ad' in request.resource.data) || (request.resource.data.ad is string && request.resource.data.ad.size() <= 80))
+        && email.matches('^[^@]+@(stu[.])?alkev[.]k12[.]tr$');
+    }
+
+    // Sınıf Düellosu (canlı yarışma). Yalnızca yöneticiler (öğretmenler) düello açar.
+    // Doğru cevaplar duels/{kod}/secret altında, yalnızca düelloyu açan öğretmen okur.
+    // Öğrenci her soruya bir kez cevap verir; süreyi sunucu saati ölçer.
+    function duel(code) {
+      return get(/databases/$(database)/documents/duels/$(code)).data;
+    }
+    match /duels/{code} {
+      allow get: if schoolUser();
+      allow list: if false;
+      allow create: if isAdmin() && request.resource.data.host == request.auth.uid;
+      allow update: if isAdmin() && resource.data.host == request.auth.uid
+        && request.resource.data.host == resource.data.host;
+      allow delete: if false;
+
+      match /secret/{doc} {
+        allow read, write: if schoolUser() && duel(code).host == request.auth.uid;
+      }
+      match /players/{uid} {
+        allow read: if schoolUser();
+        allow create: if schoolUser() && uid == request.auth.uid
+          && request.resource.data.score == 0
+          && request.resource.data.email == request.auth.token.email.lower()
+          && request.resource.data.name is string && request.resource.data.name.size() <= 80
+          && duel(code).state != 'end';
+        allow update: if schoolUser() && duel(code).host == request.auth.uid;
+        allow delete: if false;
+      }
+      match /answers/{id} {
+        allow create: if schoolUser()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.qi is int && request.resource.data.choice is int
+          && id == string(request.resource.data.qi) + '_' + request.auth.uid
+          && duel(code).state == 'question'
+          && request.resource.data.qi == duel(code).qi
+          && request.resource.data.at == request.time
+          && request.time <= duel(code).qStartedAt + duration.value(duel(code).seconds + 2, 's')
+          && exists(/databases/$(database)/documents/duels/$(code)/players/$(request.auth.uid));
+        allow read: if schoolUser() && duel(code).host == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
     // Profil + ilerleme (XP, rozetler). Herkes yalnızca kendi belgesini yazar.
     match /users/{uid} {
       allow get: if schoolUser() && (request.auth.uid == uid || isAdmin());
@@ -40,7 +94,9 @@ service cloud.firestore {
 
     // Oyun oturumları: bir kez yazılır, sonradan değiştirilemez.
     match /sessions/{id} {
+      // Yalnızca öğrenci hesapları (@stu.alkev.k12.tr) oturum kaydeder; öğretmen denemeleri rapora girmez
       allow create: if schoolUser()
+        && request.auth.token.email.lower().matches('^[^@]+@stu[.]alkev[.]k12[.]tr$')
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email.lower()
         && request.resource.data.app is string && request.resource.data.app.size() <= 40
