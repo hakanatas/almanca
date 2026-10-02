@@ -1,0 +1,103 @@
+/* Sınıf Düellosu: style.css'teki kâğıt/mürekkep token'larını kullanır.
+   Öğretmen ekranı tahtaya yansıtılır: büyük yazı, yüksek kontrast. */
+:root { --o0: var(--der); --o1: var(--die); --o2: var(--das); --o3: var(--amber-deep); }
+.duel-app { max-width: 980px; padding-top: 14px; }
+.duel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--ink-faint); }
+.duel-head .okul-who { padding-right: 0; }
+.duel-back { font-family: var(--mono); font-size: 13px; color: var(--ink-soft); text-decoration: none; }
+.duel-back:hover { color: var(--ink); }
+.dview { padding-top: 22px; }
+.duel-title { font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 8vw, 54px); line-height: 1; letter-spacing: -.02em; margin: 10px 0 14px; text-wrap: balance; }
+.center { text-align: center; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.duel-msg { font-size: 15px; color: var(--ink-soft); min-height: 1.4em; }
+
+/* Katıl */
+.join-form { display: flex; gap: 10px; flex-wrap: wrap; }
+.join-form input { flex: 1 1 200px; min-width: 0; font-family: var(--mono); font-size: 28px; letter-spacing: .3em; text-align: center; padding: 12px 14px;
+  border: 2.5px solid var(--ink); border-radius: 10px; background: var(--paper-hi); color: var(--ink); }
+.join-form input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.join-form .btn { font-size: 16px; padding: 12px 26px; }
+
+/* Öğretmen: düello aç */
+.host-box { margin-top: 34px; padding-top: 6px; border-top: 3px solid var(--ink); }
+.host-form { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: flex-end; }
+.host-form label, .host-form legend { display: grid; gap: 4px; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.host-form select { font-family: var(--serif); font-size: 16px; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 8px; background: var(--paper-hi); color: var(--ink); }
+.host-form fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.host-form legend { width: 100%; margin-bottom: 4px; }
+.host-form .chk { display: inline-flex; align-items: center; gap: 6px; font-family: var(--serif); font-size: 16px; letter-spacing: 0; text-transform: none; color: var(--ink); }
+.host-form .chk input { width: 18px; height: 18px; accent-color: var(--ink); }
+
+/* Öğretmen ekranı */
+.host-top { display: grid; grid-template-columns: 1fr auto auto; gap: 18px; align-items: center; padding: 14px 18px; border-radius: 12px; background: var(--ink); color: var(--paper); }
+.code-box small, .host-count small { display: block; font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); }
+.code-box b { display: block; font-family: var(--mono); font-weight: 500; font-size: clamp(40px, 8vw, 72px); letter-spacing: .08em; line-height: 1.05; }
+.code-box span { font-family: var(--mono); font-size: 13px; color: rgba(241, 234, 220, .75); overflow-wrap: anywhere; }
+.qr { background: #fffcf4; border-radius: 8px; padding: 6px; line-height: 0; }
+.qr:empty { display: none; }
+.qr img, .qr canvas { width: 120px; height: 120px; }
+.host-count { text-align: center; }
+.host-count b { display: block; font-family: var(--brush); font-weight: 400; font-size: 56px; line-height: 1; color: var(--paper); }
+.host-count span { font-family: var(--mono); font-size: 12px; }
+@media (max-width: 640px) { .host-top { grid-template-columns: 1fr auto; } .qr { display: none; } }
+.lobby-names { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0; min-height: 80px; align-content: flex-start; }
+.name-chip { font-family: var(--brush); font-size: 26px; padding: 6px 16px; border-radius: 10px 12px 9px 11px; border: 2.5px solid var(--ink); background: var(--paper-hi); animation: stampin .4s var(--spring); }
+
+/* Soru */
+.q-meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 18px 0 10px; font-family: var(--mono); font-size: 14px; color: var(--ink-soft); }
+.timer { font-family: var(--brush); font-size: 44px; line-height: 1; color: var(--ink); min-width: 56px; text-align: center; padding: 4px 10px; border: 2.5px solid var(--ink); border-radius: 50%; }
+.q-prompt { display: grid; justify-items: center; gap: 2px; text-align: center; padding: 18px; border-radius: 12px; background: var(--paper-hi); box-shadow: var(--lift); margin-bottom: 16px; }
+.q-prompt .emoji { font-size: clamp(50px, 9vw, 84px); }
+.q-prompt b { font-family: var(--brush); font-weight: 400; font-size: clamp(40px, 8vw, 76px); line-height: 1.05; overflow-wrap: anywhere; }
+.q-prompt small { font-size: 18px; font-style: italic; color: var(--ink-soft); }
+.q-prompt.small b { font-size: clamp(30px, 8vw, 46px); }
+.q-prompt.small .emoji { font-size: 46px; }
+.q-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.q-options.locked .qopt:not(.mine) { opacity: .45; }
+.qopt { --c: var(--o0); position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px; min-height: 84px; padding: 14px 16px; text-align: left;
+  color: var(--paper); background: var(--c); border: 2.5px solid var(--ink); border-radius: 12px 14px 10px 13px; box-shadow: 0 5px 0 var(--ink);
+  transition: transform .08s, box-shadow .08s, opacity .2s; }
+.qopt:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink); }
+.qopt.o1, .qopt.die { --c: var(--o1); } .qopt.o2, .qopt.das { --c: var(--o2); } .qopt.o3 { --c: var(--o3); }
+.qopt.der { --c: var(--der); }
+.shape { font-size: 26px; line-height: 1; opacity: .85; position: relative; z-index: 1; }
+.otext { font-family: var(--brush); font-size: clamp(24px, 5vw, 34px); line-height: 1.05; position: relative; z-index: 1; overflow-wrap: anywhere; }
+.qopt.mine { box-shadow: 0 5px 0 var(--ink), 0 0 0 5px var(--amber); }
+.qopt.dim { opacity: .35; }
+.qopt.right { box-shadow: 0 5px 0 var(--ink), 0 0 0 5px var(--amber); }
+.qopt .bar { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(23, 20, 17, .22); transition: width .8s var(--ease); }
+.qopt em { margin-left: auto; position: relative; z-index: 1; font-style: normal; font-family: var(--mono); font-size: 20px; }
+.host-opts .qopt { min-height: 96px; cursor: default; }
+
+/* Sıralama ve podyum */
+.leader { margin-top: 20px; padding: 14px 18px; border-radius: 12px; background: var(--paper-hi); box-shadow: 0 0 0 1px rgba(23, 20, 17, .08); }
+.leader h3 { font-family: var(--brush); font-weight: 400; font-size: 30px; margin: 0 0 6px; }
+.leader ol, .final-list { margin: 0; padding-left: 24px; display: grid; gap: 4px; }
+.leader li, .final-list li { font-size: 20px; }
+.leader li span, .final-list li span { margin-right: 10px; }
+.leader li b, .final-list li b { font-family: var(--mono); font-weight: 500; float: right; }
+.final-list { max-width: 560px; margin: 22px auto 0; font-size: 18px; }
+.podium { display: grid; grid-template-columns: repeat(3, 1fr); align-items: end; gap: 10px; max-width: 640px; margin: 10px auto 0; }
+.place { display: grid; justify-items: center; gap: 4px; padding: 14px 8px 0; text-align: center; animation: rise .8s var(--ease) both; }
+.place b { font-family: var(--brush); font-weight: 400; font-size: clamp(22px, 4vw, 32px); line-height: 1.05; overflow-wrap: anywhere; }
+.place span { font-family: var(--mono); font-size: 14px; color: var(--ink-soft); }
+.place i { display: grid; place-items: center; width: 100%; font-style: normal; font-family: var(--brush); font-size: 48px; color: var(--paper); background: var(--ink); border-radius: 10px 10px 0 0; }
+.place.p1 { animation-delay: .9s; } .place.p1 i { height: 150px; background: var(--amber-deep); }
+.place.p2 { animation-delay: .5s; } .place.p2 i { height: 110px; }
+.place.p3 { animation-delay: .2s; } .place.p3 i { height: 80px; background: var(--seal); }
+.place.empty { opacity: .3; }
+
+/* Öğrenci */
+.p-top { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 14px; color: var(--ink-soft); }
+.p-top #p-score { color: var(--ink); font-size: 16px; }
+.p-wait, .p-result { display: grid; justify-items: center; gap: 4px; padding-top: 20px; }
+.p-max { width: min(60vw, 240px); }
+.p-result.ok .duel-title { color: var(--das); }
+.p-result.bad .duel-title { color: var(--seal); }
+.big-pts { font-family: var(--brush); font-size: 54px; line-height: 1; margin: 0; }
+.p-result p { margin: 4px 0; font-size: 18px; }
+.player .q-options { grid-template-columns: 1fr; }
+@media (min-width: 560px) { .player .q-options { grid-template-columns: 1fr 1fr; } }
+
+a.btn { text-decoration: none; display: inline-block; }

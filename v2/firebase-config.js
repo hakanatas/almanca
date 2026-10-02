@@ -17,3 +17,6 @@ window.OKUL_ALAN_ADLARI = ['alkev.k12.tr', 'stu.alkev.k12.tr'];
 
 // Kullanıcı çubuğundaki "Rapor paneli" bağlantısı (sayfalar <base href="../"> kullandığı için köke göre)
 window.OKUL_ADMIN_URL = 'v2/admin.html';
+
+// Sayfaların kendi aralarındaki bağlantılar için v2 ana klasörü (köke göre)
+window.OKUL_HOME_URL = 'v2/';

@@ -1,0 +1,133 @@
+<!doctype html>
+<!-- tools/build_v2.py tarafından kökteki duello.html dosyasından üretildi; elle düzenlemeyin. -->
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f1eadc">
+  <title>Sınıf Düellosu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@500&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/duello.css">
+</head>
+<body class="duel-page">
+  <!-- GİRİŞ (okul hesabı) -->
+  <div id="okul-gate" class="gate" data-state="busy">
+    <div class="gate-card">
+      <div class="gate-max" id="gate-max"></div>
+      <div class="kicker"><span class="seal">D</span>Sınıf Düellosu</div>
+      <h1>Düello<span class="dot"></span></h1>
+      <p class="lede">Öğretmeninin tahtaya yansıttığı kodla katıl, sınıfınla aynı anda yarış. Önce okul Google hesabınla giriş yap.</p>
+      <button type="button" class="google-btn" data-okul-signin>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Google ile giriş yap
+      </button>
+      <p class="gate-note">Yalnızca <b>@alkev.k12.tr</b> ve <b>@stu.alkev.k12.tr</b> hesapları.</p>
+      <p class="gate-msg" data-okul-msg role="status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <div id="app" class="duel-app">
+    <header class="duel-head">
+      <a class="duel-back" href="v2/">← Oyunlar</a>
+      <div class="okul-who" id="okul-who"></div>
+    </header>
+
+    <!-- Deneme modunda (Firebase yok) -->
+    <section class="dview" id="v-demo" hidden>
+      <div class="kicker"><span class="seal">D</span>Sınıf Düellosu</div>
+      <h1 class="duel-title">Düello okul hesabıyla oynanır<span class="dot"></span></h1>
+      <p class="lede">Canlı yarışma için girişli sürüme geçin: <a href="v2/duello.html"><b>v2/duello.html</b></a></p>
+    </section>
+
+    <!-- Başlangıç: koda katıl / (öğretmen) düello aç -->
+    <section class="dview" id="v-start" hidden>
+      <div class="kicker"><span class="seal">D</span>Sınıf Düellosu</div>
+      <h1 class="duel-title">Koda katıl<span class="dot"></span></h1>
+      <form id="join-form" class="join-form" autocomplete="off">
+        <label for="join-code" class="sr-only">Düello kodu</label>
+        <input id="join-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="6 haneli kod" aria-describedby="join-msg">
+        <button type="submit" class="btn">Katıl</button>
+      </form>
+      <p class="duel-msg" id="join-msg" role="status" aria-live="polite"></p>
+
+      <div class="host-box" id="host-box" hidden>
+        <h2 class="section-title">Öğretmen: yeni düello</h2>
+        <p class="section-sub">Sorular seçtiğiniz temanın kelimelerinden otomatik hazırlanır. Kodu ve QR'ı tahtaya yansıtın.</p>
+        <form id="host-form" class="host-form">
+          <label>Tema <select id="h-theme"></select></label>
+          <label>Soru sayısı <select id="h-count"><option>5</option><option selected>10</option><option>15</option><option>20</option></select></label>
+          <label>Süre (sn) <select id="h-secs"><option>10</option><option>15</option><option selected>20</option><option>30</option></select></label>
+          <fieldset>
+            <legend>Soru türleri</legend>
+            <label class="chk"><input type="checkbox" id="k-artikel" checked> der / die / das</label>
+            <label class="chk"><input type="checkbox" id="k-anlam" checked> Almanca → Türkçe</label>
+            <label class="chk"><input type="checkbox" id="k-ters" checked> Türkçe → Almanca</label>
+            <label class="chk"><input type="checkbox" id="k-fiil"> Fiil çekimi</label>
+          </fieldset>
+          <button type="submit" class="btn">Düelloyu aç</button>
+          <span class="duel-msg" id="host-msg" role="status" aria-live="polite"></span>
+        </form>
+      </div>
+    </section>
+
+    <!-- ÖĞRETMEN EKRANI (tahtaya yansıtılır) -->
+    <section class="dview host" id="v-host" hidden>
+      <div class="host-top">
+        <div class="code-box"><small>Katılım kodu</small><b id="h-code">––––––</b><span id="h-url"></span></div>
+        <div class="qr" id="h-qr" aria-label="Katılım bağlantısının QR kodu"></div>
+        <div class="host-count"><small id="h-phase">Lobi</small><b id="h-players-n">0</b><span>oyuncu</span></div>
+      </div>
+
+      <div id="h-lobby">
+        <div class="lobby-names" id="h-names"><p class="muted">Öğrenciler katıldıkça adları burada belirir…</p></div>
+        <div class="row"><button class="btn" id="h-start" disabled>Başlat</button></div>
+      </div>
+
+      <div id="h-question" hidden>
+        <div class="q-meta"><span id="h-qn"></span><span class="timer" id="h-timer"></span><span id="h-answered"></span></div>
+        <div class="q-prompt" id="h-prompt"></div>
+        <div class="q-options host-opts" id="h-options"></div>
+        <div class="row"><button class="btn ghost" id="h-reveal">Süreyi bitir</button><button class="btn" id="h-next" hidden>Sonraki soru</button></div>
+        <div class="leader" id="h-leader" hidden></div>
+      </div>
+
+      <div id="h-end" hidden>
+        <h2 class="duel-title center">Kazananlar</h2>
+        <div class="podium" id="h-podium"></div>
+        <ol class="final-list" id="h-final"></ol>
+        <div class="row"><button class="btn ghost" id="h-csv">Sonuçları CSV indir</button><a class="btn" href="v2/duello.html">Yeni düello</a></div>
+      </div>
+    </section>
+
+    <!-- ÖĞRENCİ EKRANI -->
+    <section class="dview player" id="v-player" hidden>
+      <div class="p-top"><span id="p-code"></span><span id="p-score">0 puan</span></div>
+      <div id="p-wait" class="p-wait">
+        <div class="p-max" id="p-max"></div>
+        <h2 class="duel-title center" id="p-wait-title">Katıldın!</h2>
+        <p class="lede center" id="p-wait-sub">Öğretmen başlatınca soru burada çıkacak.</p>
+      </div>
+      <div id="p-question" hidden>
+        <div class="q-meta"><span id="p-qn"></span><span class="timer" id="p-timer"></span></div>
+        <div class="q-prompt small" id="p-prompt"></div>
+        <div class="q-options" id="p-options"></div>
+      </div>
+      <div id="p-result" class="p-result" hidden></div>
+    </section>
+  </div>
+
+  <div id="confetti" aria-hidden="true"></div>
+
+  <script src="v2/firebase-config.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script type="module" src="js/okul.js"></script>
+  <script type="module" src="js/duello.js"></script>
+</body>
+</html>

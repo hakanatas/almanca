@@ -40,6 +40,10 @@ python3 -m http.server 8000   # → http://localhost:8000
 
 ## 2. Oyun modları
 
+0. **🏃 Artikel Koşusu** — sonsuz koşu. Max soldan sağa koşar; sağdan gelen kelime kapısına
+   varmadan doğru şeride (*der / die / das*) geç. Doğru bildikçe hızlanır; 3 can, kalkan,
+   ekstra can, altın (x2) kelime ve toplanan puanlar var. Kontrol: alttaki düğmeler, şeride
+   dokunma, yukarı/aşağı kaydırma ya da ↑ ↓ / 1 2 3 tuşları.
 1. **🎯 Artikel Avı** — 60 saniye. Kelime ve resmi çıkar, *der / die / das*
    butonlarından birine bas. Üst üste doğrular kombo puanı verir (x2'ye kadar bonus).
 2. **🃏 Hafıza Kartları** — 6 çift kart. Almanca kelime kartını resim kartıyla eşleştir.
@@ -48,6 +52,15 @@ python3 -m http.server 8000   # → http://localhost:8000
 4. **🚂 Cümle Treni** — 6 cümle. Türkçe anlamı verilen cümlenin kelime vagonlarını
    trene sırayla tak. Doğruysa tren yola çıkar.
 5. **🚀 Fiil Roketi** — 10 tur. `Du ___ Fußball. (spielen)` → *spielst*. Doğruysa roket uçar.
+
+**⚔️ Sınıf Düellosu** (yalnızca girişli `/v2/` sürümünde, `duello.html`) — Kahoot tarzı canlı
+yarışma. Yönetici listesindeki öğretmen tema, soru sayısı, süre ve soru türlerini (der/die/das,
+Almanca→Türkçe, Türkçe→Almanca, fiil çekimi) seçip düello açar; 6 haneli kod ve QR kod tahtaya
+yansıtılır. Öğrenciler telefondan kodla katılır, herkes aynı soruya aynı anda cevap verir.
+Doğru cevap 500 puan + hız bonusu (en fazla 500), üst üste 3 doğruya +100. Her sorudan sonra
+cevap dağılımı ve ilk 5; sonunda podyum ve CSV. Doğru cevaplar yalnızca öğretmenin okuyabildiği
+`duels/{kod}/secret` belgesinde durur; cevap süresini sunucu saati ölçer, süre dolunca cevap
+kabul edilmez. Öğrencinin düellosu rapor paneline "Sınıf Düellosu" oturumu olarak kaydedilir.
 
 Hepsi seçilen **temaya** göre çalışır: Aile, Okul, Yiyecek & İçecek, Hayvanlar,
 Ev, Boş Zaman (veya hepsi karışık). Temalar MEB 2. yabancı dil Almanca A1
@@ -119,14 +132,14 @@ yönetici `v2/admin.html` sayfasında hepsini tek yerde görür ve CSV olarak in
 
 İki sürüm aynı `css/`, `js/`, `audio/` dosyalarını kullanır; oyunda yapılan her değişiklik ikisine de yansır.
 `v2/index.html` ve `v2/admin.html` kökteki sayfalardan üretilir (yalnızca `<base href="../">` ve ayar dosyası farklı).
-Kökteki `index.html` ya da `admin.html` değişince: `python3 tools/build_v2.py`
+Kökteki `index.html`, `admin.html` ya da `duello.html` değişince: `python3 tools/build_v2.py`
 Altyapı Firebase'dir (Google girişi + Firestore veritabanı), ücretsiz katman bir okul için yeterlidir.
 
 **Güvenlik nasıl sağlanıyor?** Alan adı kontrolü yalnızca tarayıcıda değil, sunucudaki
 `firebase/firestore.rules` kurallarında da yapılır: başka bir Google hesabıyla giren kişi
 hiçbir veriyi okuyamaz, yazamaz. Öğrenci yalnızca kendi kayıtlarını görür, kayıtlar
 sonradan değiştirilemez, toplu raporu yalnızca yönetici okur. Kurallar Firestore emülatöründe
-37 senaryoyla test edildi (sahte alan adları, başkası adına kayıt, yetkisiz öğretmen vb.).
+60 senaryoyla test edildi (sahte alan adları, başkası adına kayıt, yetkisiz öğretmen vb.).
 
 Ayar dosyası boşken oyun **deneme modunda** girişsiz çalışır ve hiçbir veri göndermez.
 
@@ -187,6 +200,7 @@ yaptığı kelimeleri görür.
 |---|---|---|
 | `users/{uid}` | ad, e-posta, öğrenci/öğretmen, ilk ve son giriş, uygulama ilerlemesi (XP, rozetler) | kişinin kendisi, yönetici |
 | `sessions/{id}` | uygulama, oyun, tema, başlangıç/bitiş, etkin süre (sekme arkadayken saat durur), doğru/yanlış sayısı, puan, tamamlandı mı, her cevap (soru, doğrusu, verilen, süre) | kişinin kendisi, yönetici |
+| `duels/{kod}` (+ `players`, `answers`, `secret`) | canlı düello: durum, oyuncu puanları, cevaplar, cevap anahtarı | öğrenci: kendi katılımı ve sıralama; cevap anahtarı ve cevaplar yalnızca düelloyu açan öğretmen |
 | `sinif_listesi/{e-posta}` | sınıf, ad soyad (öğretmenin yüklediği liste) | yönetici |
 | `admins/{e-posta}` | yönetici listesi (yalnızca konsoldan düzenlenir) | — |
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""/v2/ sayfalarını kökteki index.html ve admin.html'den üretir.
+"""/v2/ sayfalarını kökteki index.html, admin.html ve duello.html'den üretir.
 
 /almanca/      girişsiz sürüm (js/firebase-config.js boş kalır)
 /almanca/v2/   okul hesabıyla giriş + çalışma kaydı (v2/firebase-config.js)
@@ -35,8 +35,13 @@ def build(name, extra=()):
 
 if __name__ == '__main__':
     check = '--check' in sys.argv
-    changed = [n for n in ('index.html', 'admin.html')
-               if build(n, [('href="index.html">Oyuna dön', 'href="v2/">Oyuna dön')] if n == 'admin.html' else [])]
+    extras = {
+        'index.html': [('href="duello.html"', 'href="v2/duello.html"')],
+        'admin.html': [('href="index.html">Oyuna dön', 'href="v2/">Oyuna dön')],
+        'duello.html': [('href="./">', 'href="v2/">'), ('href="duello.html">Yeni düello', 'href="v2/duello.html">Yeni düello'),
+                        ('href="v2/duello.html"><b>v2/duello.html</b>', 'href="v2/duello.html"><b>v2/duello.html</b>')],
+    }
+    changed = [n for n in ('index.html', 'admin.html', 'duello.html') if build(n, extras[n])]
     if check and changed:
         sys.exit('v2 sayfaları güncel değildi: ' + ', '.join(changed) + ' (tools/build_v2.py çalıştırıldı, değişiklikleri ekleyin)')
-    print('v2/index.html ve v2/admin.html hazır.')
+    print('v2/index.html, v2/admin.html ve v2/duello.html hazır.')
