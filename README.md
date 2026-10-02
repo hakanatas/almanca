@@ -193,15 +193,18 @@ kayıt yoksa cihazın tarayıcı sesine düşer. Kayıtlar `tools/generate_audio
 `js/data.js`'teki bütün kelime ve cümlelerden tek komutla üretilir; ses değiştirilince
 hepsi yeniden kaydedilir.
 
-**Durum:** Ses seçimi sürüyor, bu yüzden `js/audio.js` henüz `index.html`'e eklenmedi
-(oyun şimdilik tarayıcı sesini kullanıyor). Ücretsiz iki ses denendi ve yeterli bulunmadı:
+**Seçilen ses: Piper "Thorsten"** (ücretsiz, çevrimdışı, CC0). 26 zor metinlik körlemesine
+karşılaştırmada öğretmen oylarının çoğunu aldı (9 oyun 8'i). Oyun bu kayıtları kullanıyor.
 
-| Ses | Whisper denetimi (26 zor metin) | Sonuç |
+| Ses | Whisper denetimi (26 zor metin) | Not |
 |---|---|---|
-| Piper "Thorsten" (CC0) | 17/26 | ö/ü/ä'de zayıf |
+| Piper "Thorsten" (CC0) | 17/26 | seçilen; cümlelerde güçlü, bazı ö/ü/ä kelimelerinde zayıf |
 | Chatterbox Multilingual (MIT) | 14/26 | daha doğal ama kısa kelimelerde fazladan ses üretiyor |
 
-Sıradaki adım Google Cloud Text-to-Speech (Chirp 3 HD). Bizim hacmimiz (yaklaşık 3.000–40.000
+Yeni kelime eklenince: `python3 tools/generate_audio.py --engine piper --model yol/de_DE-thorsten-high.onnx`
+
+İleride daha iyi bir ses istenirse Google Cloud Text-to-Speech (Chirp 3 HD) hazır;
+bizim hacmimiz (yaklaşık 3.000–40.000
 karakter) aylık 1 milyon karakterlik ücretsiz kotanın içinde kalır.
 
 1. Google Cloud'da *Cloud Text-to-Speech API*'yi etkinleştirip yalnızca bu API ile sınırlı bir
@@ -210,7 +213,6 @@ karakter) aylık 1 milyon karakterlik ücretsiz kotanın içinde kalır.
 2. Karşılaştırma sayfası: `python3 tools/voice-test/compare_voices.py --auto --whisper --collection round2`
    → `tools/voice-test/ses-karsilastirma.html` (claude.ai'de `db` yeteneğiyle yayınlanır, oylar oraya yazılır).
 3. Seçilen sesle kayıt: `python3 tools/generate_audio.py --engine google --voice de-DE-Chirp3-HD-…`
-   ve `index.html`'de `js/app.js`'ten önce `<script src="js/audio.js"></script>` eklenir.
 
 ## 8. Yol haritası (sonraki adımlar)
 
