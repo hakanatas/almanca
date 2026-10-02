@@ -99,6 +99,36 @@
         <div class="table-wrap"><table id="t-missed"></table></div>
       </section>
 
+      <section class="panel sets" id="sets">
+        <div class="panel-head">
+          <h2 class="section-title">Hafıza oyunu kelimeleri</h2>
+          <button type="button" class="btn small" id="s-new">Yeni kelime seti</button>
+        </div>
+        <p class="section-sub">Hafıza Kartları oyunu için kelime havuzundan setler hazırlayın. Öğrenci oyunu açınca setlerinizden birini seçer; her oyunda setten 6-8 kelime karışık gelir. Bir seti belirli sınıflara açabilir ya da bütün sınıflara bırakabilirsiniz.</p>
+        <div id="s-list" class="s-list"></div>
+        <div id="s-editor" class="s-editor" hidden>
+          <div class="s-row">
+            <label class="s-name">Set adı <input id="s-name" maxlength="60" placeholder="ör. 3. Ünite: Okulda"></label>
+            <div class="s-classes" role="group" aria-label="Hangi sınıflar görsün">
+              <span class="r-label">Kimler görsün</span>
+              <div id="s-classes" class="chips"></div>
+            </div>
+          </div>
+          <div class="s-tools">
+            <input id="s-q" type="search" placeholder="Kelime ara (Almanca ya da Türkçe)">
+            <span id="s-count" class="s-count"></span>
+          </div>
+          <div id="s-picked" class="s-picked"></div>
+          <div id="s-pool" class="s-pool"></div>
+          <div class="row left s-actions">
+            <button type="button" class="btn small" id="s-save">Seti kaydet</button>
+            <button type="button" class="btn ghost small" id="s-cancel">Vazgeç</button>
+            <button type="button" class="btn ghost small danger" id="s-delete" hidden>Seti sil</button>
+            <span class="status" id="s-status" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
+
       <section class="panel roster" id="roster">
         <div class="panel-head"><h2 class="section-title">Sınıf listesi</h2></div>
         <p class="section-sub">Öğrencilerin sınıfları buradan yüklenir; öğrenciler sınıf seçmez. Excel'de <b>e-posta</b>, <b>sınıf</b> ve isterseniz <b>ad soyad</b> sütunlarını seçip kopyalayın ve aşağıya yapıştırın ya da CSV dosyası seçin. Sütun sırası önemli değil; "9A", "9/A", "9 A" hepsi 9-A olarak okunur. Aynı e-posta tekrar yüklenirse sınıfı güncellenir.</p>
@@ -121,7 +151,9 @@
   <div class="tip" id="tip" hidden></div>
 
   <script src="js/firebase-config.js"></script>
+  <script src="js/data.js"></script>
   <script type="module" src="js/okul.js"></script>
   <script type="module" src="js/admin.js"></script>
+  <script type="module" src="js/setler.js"></script>
 </body>
 </html>

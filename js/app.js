@@ -328,7 +328,7 @@ function finish() {
   const earned = [];
   const give = (id) => { if (!state.badges.includes(id)) { state.badges.push(id); earned.push(BADGES.find((b) => b.id === id)); } };
   give('ilk');
-  if (['artikel', 'run', 'ninja', 'fly', 'snake'].includes(s.id) && s.maxCombo >= 10) give('kombo10');
+  if (['artikel', 'ninja', 'fly', 'snake'].includes(s.id) && s.maxCombo >= 10) give('kombo10');
   if (s.total >= 5 && s.mistakes === 0) give('mukemmel');
   if (Object.keys(GAMES).every((g) => state.played[g])) give('kasif');
   if (state.streak >= 3) give('seri3');
@@ -402,135 +402,124 @@ function choiceButtons(container, options, correct, onDone, render = (o) => o) {
 }
 
 // ---------- OYUNLAR ----------
+// Hafıza oyunu tahtası: dağıtma, kısa ezber, çevirme, eşleşme patlaması, kombo
+function memoryBoard(area, s, pool) {
+  const pairs = Math.min(window.innerWidth >= 640 ? 8 : 6, pool.length);
+  const words = shuffle(pool).slice(0, pairs);
+  const cards = shuffle(words.flatMap((w, k) => [
+    { k, type: 'de', w, html: `<b class="mc-art t-${w.art}">${w.art}</b><b class="mc-word">${w.de}</b>` },
+    { k, type: 'pic', w, html: `<span class="emoji">${w.e}</span><small>${w.tr}</small>` },
+  ]));
+  let open = [], found = 0, moves = 0, streak = 0, locked = true, t0 = 0, clock = 0;
+  const hud = () => {
+    const sec = t0 ? Math.floor((Date.now() - t0) / 1000) : 0;
+    $('#hud-info').textContent = `${moves} hamle · ${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  };
+  hud();
+  area.innerHTML = `<p class="hint mem-hint">Kartlara iyi bak, birazdan kapanacaklar!</p>
+    <div class="memory-wrap"><div class="memory${pairs > 6 ? ' wide' : ''}"></div><div class="mem-fx" aria-hidden="true"></div></div>`;
+  const grid = area.querySelector('.memory'), fxl = area.querySelector('.mem-fx'), hint = area.querySelector('.mem-hint');
+  const btns = cards.map((c, i) => {
+    const b = el('button', 'mcard', `<div class="mc-inner"><div class="back"><span>?</span></div><div class="front ${c.type}">${c.html}</div></div>`);
+    b.style.setProperty('--i', i);
+    b.setAttribute('aria-label', 'Kapalı kart');
+    grid.appendChild(b);
+    return b;
+  });
+  // Dağıtma: kartlar ortadaki desteden yerlerine uçar
+  const gr = grid.getBoundingClientRect();
+  btns.forEach((b, i) => {
+    const r = b.getBoundingClientRect();
+    b.style.setProperty('--dx', `${gr.left + gr.width / 2 - (r.left + r.width / 2)}px`);
+    b.style.setProperty('--dy', `${gr.top + gr.height / 2 - (r.top + r.height / 2)}px`);
+    b.style.setProperty('--rot', `${(Math.random() * 30 - 15).toFixed(1)}deg`);
+    b.classList.add('deal');
+  });
+  const dealMs = 450 + btns.length * 45;
+  // Kısa ezber: hepsi bir an açılır, sonra dalga hâlinde kapanır
+  later(s, () => btns.forEach((b, i) => setTimeout(() => b.classList.add('flip'), i * 25)), dealMs);
+  const peek = 1300 + pairs * 120;
+  later(s, () => {
+    btns.forEach((b, i) => setTimeout(() => b.classList.remove('flip'), i * 35));
+    hint.textContent = 'Şimdi bul bakalım! Kelimeyi resmiyle eşleştir.';
+    later(s, () => { locked = false; t0 = Date.now(); clock = setInterval(hud, 1000); }, btns.length * 35 + 300);
+  }, dealMs + peek);
+  const prevCleanup = s.cleanup;
+  s.cleanup = () => { clearInterval(clock); if (prevCleanup) prevCleanup(); };
+
+  const burst = (b, color) => {
+    const r = b.getBoundingClientRect(), fr = fxl.getBoundingClientRect();
+    const x = r.left + r.width / 2 - fr.left, y = r.top + r.height / 2 - fr.top;
+    for (let i = 0; i < 14; i++) {
+      const p = el('i', 'mem-p');
+      const a = (i / 14) * Math.PI * 2 + Math.random() * 0.4, d = 40 + Math.random() * 60;
+      p.style.cssText = `left:${x}px;top:${y}px;--px:${Math.cos(a) * d}px;--py:${Math.sin(a) * d}px;background:${color};--s:${0.5 + Math.random()}`;
+      fxl.appendChild(p);
+      setTimeout(() => p.remove(), 800);
+    }
+  };
+  const float = (b, html, cls = '') => {
+    const r = b.getBoundingClientRect(), fr = fxl.getBoundingClientRect();
+    const t = el('div', 'mem-float ' + cls, html);
+    t.style.left = `${r.left + r.width / 2 - fr.left}px`; t.style.top = `${r.top - fr.top}px`;
+    fxl.appendChild(t);
+    setTimeout(() => t.remove(), 1400);
+  };
+
+  btns.forEach((b, i) => {
+    const c = cards[i];
+    b.onclick = () => {
+      if (locked || b.classList.contains('flip') || open.length === 2) return;
+      b.classList.add('flip');
+      b.setAttribute('aria-label', c.type === 'de' ? `${c.w.art} ${c.w.de}` : c.w.tr);
+      if (c.type === 'de') speak(`${c.w.art} ${c.w.de}`);
+      open.push({ b, c });
+      if (open.length < 2) return;
+      moves++; hud();
+      const [x, y] = open;
+      s.total = moves;
+      if (x.c.k === y.c.k) {
+        found++; streak++;
+        s.correct = found;
+        setProgress(found / pairs);
+        const w = x.c.w, color = `var(--${w.art})`;
+        answer(true, '', { q: `${w.art} ${w.de}`, expected: w.tr, given: w.tr }, { quiet: true });
+        s.total = moves; s.correct = found;   // doğruluk oranı: bulunan çift / hamle
+        setTimeout(() => {
+          [x.b, y.b].forEach((n) => { n.classList.add('done'); n.style.setProperty('--c', color); burst(n, color); });
+          float(y.b, `<b class="t-${w.art}">${w.art} ${w.de}</b> = ${w.tr}`);
+          if (streak >= 2) { addScore(5 * streak); float(x.b, `🔥 Kombo x${streak}`, 'combo'); }
+        }, 380);
+        open = [];
+        if (found === pairs) {
+          clearInterval(clock);
+          hint.textContent = `Hepsini buldun! ${moves} hamle.`;
+          later(s, () => btns.forEach((n, j) => setTimeout(() => n.classList.add('win'), j * 60)), 700);
+          later(s, finish, 1700 + btns.length * 60);
+        }
+      } else {
+        // Yanlış eşleşme seriyi bozar; doğruluk oranı hamle sayısından hesaplanır
+        streak = 0; s.combo = 0; s.mistakes++;
+        s.correct = found;
+        const de = x.c.type === 'de' ? x.c.w : y.c.w, pic = x.c.type === 'de' ? y.c.w : x.c.w;
+        okul('record', x.c.type === y.c.type
+          ? { q: `${x.c.w.de} / ${y.c.w.de}`, expected: 'kelime + resim', given: 'aynı türden iki kart', ok: false }
+          : { q: `${de.art} ${de.de}`, expected: de.tr, given: pic.tr, ok: false });
+        setTimeout(() => { [x.b, y.b].forEach((n) => n.classList.add('nope')); beep(false); }, 420);
+        setTimeout(() => {
+          [x.b, y.b].forEach((n) => { n.classList.remove('flip', 'nope'); n.setAttribute('aria-label', 'Kapalı kart'); });
+          open = [];
+        }, 1150);
+      }
+    };
+  });
+}
+
 const GAMES = {
   // Atari oyunları js/arcade.js içinde
-  run: ARC.run,
   ninja: ARC.ninja,
   fly: ARC.fly,
   snake: ARC.snake,
-
-  // Kelime Avcısı: Türkçe anlamı verilen kelimenin meteorunu vur
-  hunt: {
-    name: 'Kelime Avcısı', de: 'Der Wortjäger', code: 'WORTSCHATZ', len: '3 can', skill: 'Kelimenin anlamını hızla tanıyabilme',
-    desc: 'Üstte Türkçesi yazan kelimenin Almanca meteorunu vur! Yanlış meteor ya da kaçan doğru meteor can götürür; her 5 doğruda seviye atlarsın.',
-    start(area, s) {
-      let lives = 3, level = 1, hits = 0, round = null, meteors = [], last = 0, raf = 0, over = false;
-      let pool = shuffle(wordPool()), pi = 0;
-      const all = allWords();
-      area.innerHTML = `
-        <div class="space" id="space" aria-label="Uzay: doğru kelimenin meteoruna dokun">
-          <div class="space-stars"></div>
-          <div class="space-target" id="starget"></div>
-          <div class="space-field" id="sfield"></div>
-          <svg class="laser" id="slaser" aria-hidden="true"><line id="sline" x1="0" y1="0" x2="0" y2="0"/></svg>
-          <div class="space-ship" id="sship">${ICONS.verb}</div>
-          <div class="runner-msg" id="smsg" hidden></div>
-        </div>
-        <p class="hint">Üstteki Türkçe kelimenin Almancasını taşıyan meteora dokun.</p>`;
-      const space = $('#space'), field = $('#sfield');
-      const hearts = () => { $('#hud-info').innerHTML = `<span class="hearts">${'❤️'.repeat(lives)}${'🤍'.repeat(3 - lives)}</span> <small>Sv ${level}</small>`; };
-      hearts();
-      const msg = (text, cls) => {
-        const m = $('#smsg'); m.innerHTML = text; m.className = 'runner-msg ' + cls; m.hidden = false;
-        clearTimeout(msg.t); msg.t = setTimeout(() => { m.hidden = true; }, cls === 'bad' ? 1500 : 800);
-      };
-      const H = () => field.clientHeight;
-      const fallTime = () => Math.max(3.4, 8 - level * 0.7);           // bir meteorun düşme süresi (sn)
-      const count = () => Math.min(5, 2 + Math.ceil(level / 2));        // ekrandaki meteor sayısı
-
-      const newRound = () => {
-        if (over) return;
-        if (pi >= pool.length) { pool = shuffle(wordPool()); pi = 0; }
-        const w = pool[pi++];
-        const others = shuffle(all.filter((x) => x.tr !== w.tr && x.de !== w.de)).slice(0, count() - 1);
-        const words = shuffle([w, ...others]);
-        $('#starget').innerHTML = `<small>Vur:</small><b>${w.tr}</b>`;
-        $('#starget').classList.remove('pop'); void $('#starget').offsetWidth; $('#starget').classList.add('pop');
-        round = { w, done: false };
-        const lanes = shuffle([...Array(words.length).keys()]);
-        meteors = words.map((x, i) => {
-          const m = el_('button', 'meteor', `<span>${x.art} ${x.de}</span>`);
-          m.type = 'button';
-          const lane = lanes[i];
-          m.style.left = `${4 + (lane * 92) / words.length}%`;
-          m.style.width = `${Math.max(22, 88 / words.length)}%`;
-          field.appendChild(m);
-          const o = { x, el: m, y: -0.05 - Math.random() * 0.3, dead: false, speed: (0.85 + Math.random() * 0.3) / fallTime() };
-          m.addEventListener('pointerdown', (e) => { e.preventDefault(); shoot(o); });
-          return o;
-        });
-      };
-      const fire = (o) => {
-        const sr = space.getBoundingClientRect(), mr = o.el.getBoundingClientRect(), shr = $('#sship').getBoundingClientRect();
-        const x1 = shr.left + shr.width / 2 - sr.left, y1 = shr.top - sr.top + 6, x2 = mr.left + mr.width / 2 - sr.left, y2 = mr.top + mr.height / 2 - sr.top;
-        const line = $('#sline');
-        line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-        $('#slaser').classList.remove('on'); void $('#slaser').offsetWidth; $('#slaser').classList.add('on');
-        $('#sship').style.transform = `translateX(-50%) rotate(${Math.atan2(x2 - x1, y1 - y2) * 57.3}deg)`;
-      };
-      const clearRound = (delay) => {
-        round.done = true;
-        meteors.forEach((m) => { if (!m.dead) { m.dead = true; m.el.classList.add('fade'); } });
-        later(s, () => { field.innerHTML = ''; meteors = []; newRound(); }, delay);
-      };
-      const shoot = (o) => {
-        if (over || !round || round.done || o.dead) return;
-        fire(o);
-        const w = round.w, ok = o.x === w;
-        const item = { q: w.tr, expected: `${w.art} ${w.de}`, given: `${o.x.art} ${o.x.de}` };
-        speak(`${o.x.art} ${o.x.de}`, 1);
-        if (ok) {
-          o.dead = true; o.el.classList.add('boom');
-          answer(true, '', item, { quiet: true });
-          addScore(level * 2);
-          hits++;
-          if (hits % 5 === 0) { level++; msg(`Seviye ${level}! 🚀`, 'ok'); } else msg(`${w.art} ${w.de} = ${w.tr}`, 'ok');
-          hearts();
-          setProgress(Math.min(1, hits / 30));
-          clearRound(550);
-        } else {
-          o.dead = true; o.el.classList.add('wrongm');
-          lives--; hearts();
-          answer(false, '', item, { quiet: true });
-          msg(`${o.x.de} = ${o.x.tr}. Aranan: <b>${w.art} ${w.de}</b>`, 'bad');
-          space.classList.remove('hurt'); void space.offsetWidth; space.classList.add('hurt');
-          if (lives <= 0) end(); else clearRound(1300);
-        }
-      };
-      const missed = () => {
-        const w = round.w;
-        lives--; hearts();
-        answer(false, '', { q: w.tr, expected: `${w.art} ${w.de}`, given: '(kaçtı)' }, { quiet: true });
-        msg(`Kaçırdın! <b>${w.art} ${w.de}</b> = ${w.tr}`, 'bad');
-        space.classList.remove('hurt'); void space.offsetWidth; space.classList.add('hurt');
-        if (lives <= 0) end(); else clearRound(1300);
-      };
-      const frame = (t) => {
-        if (over) return;
-        const dt = Math.min(0.05, last ? (t - last) / 1000 : 0); last = t;
-        meteors.forEach((m) => {
-          if (m.dead) return;
-          m.y += m.speed * dt;
-          m.el.style.transform = `translateY(${m.y * H()}px)`;
-          if (m.y > 0.84 && round && !round.done) {
-            if (m.x === round.w) missed();
-            else { m.dead = true; m.el.classList.add('fade'); }
-          }
-        });
-        raf = requestAnimationFrame(frame);
-      };
-      const end = () => { over = true; cancelAnimationFrame(raf); later(s, finish, 1400); };
-      s.cleanup = () => { over = true; cancelAnimationFrame(raf); };
-      let n = 3;
-      msg('<b class="count">3</b>', 'count');
-      const tick = setInterval(() => {
-        n--;
-        if (session !== s || !s.active) { clearInterval(tick); return; }
-        if (n > 0) msg(`<b class="count">${n}</b>`, 'count');
-        else { clearInterval(tick); msg('Los!', 'count'); newRound(); raf = requestAnimationFrame(frame); }
-      }, 650);
-    },
-  },
 
   // 1) Der-Die-Das: 60 saniyelik hız oyunu
   artikel: {
@@ -597,60 +586,32 @@ const GAMES = {
     },
   },
 
-  // 2) Hafıza kartları: Almanca kelime ↔ resim
+  // 2) Hafıza kartları: Almanca kelime ↔ resim. Öğretmenin kelime setleri varsa önce set seçilir.
   memory: {
-    name: 'Hafıza Kartları', de: 'Das Gedächtnisspiel', code: 'WORTSCHATZ', len: '6 çift', skill: 'Kelimeyi artikeli ve anlamıyla eşleştirebilme',
-    desc: 'Kartları çevir, Almanca kelimeyi resmiyle eşleştir. Ne kadar az hamle, o kadar çok yıldız.',
-    start(area, s) {
-      const words = shuffle(wordPool()).slice(0, 6);
-      const cards = shuffle(words.flatMap((w, k) => [
-        { k, type: 'de', html: `<b class="t-${w.art}">${w.art}</b> ${w.de}`, w },
-        { k, type: 'pic', html: `<span class="emoji">${w.e}</span><small>${w.tr}</small>`, w },
-      ]));
-      let open = [];
-      let found = 0;
-      let moves = 0;
-      $('#hud-info').textContent = '0 hamle';
-      const grid = el('div', 'memory');
-      cards.forEach((c) => {
-        const b = el('button', 'mcard', `<div class="back">?</div><div class="front ${c.type}">${c.html}</div>`);
-        b.onclick = () => {
-          if (b.classList.contains('flip') || open.length === 2) return;
-          b.classList.add('flip');
-          if (c.type === 'de') speak(`${c.w.art} ${c.w.de}`);
-          open.push({ b, c });
-          if (open.length === 2) {
-            moves++;
-            $('#hud-info').textContent = `${moves} hamle`;
-            const [x, y] = open;
-            if (x.c.k === y.c.k) {
-              found++;
-              setProgress(found / words.length);
-              x.b.classList.add('done'); y.b.classList.add('done');
-              answer(true, `<b class="t-${x.c.w.art}">${x.c.w.art} ${x.c.w.de}</b> = ${x.c.w.tr}`,
-                { q: `${x.c.w.art} ${x.c.w.de}`, expected: x.c.w.tr, given: x.c.w.tr });
-              open = [];
-              if (found === words.length) later(s, finish, 900);
-            } else {
-              // Yanlış eşleşme sadece seriyi bozar; doğruluk oranı hamle sayısına göre hesaplanır
-              s.combo = 0;
-              s.mistakes++;
-              const de = x.c.type === 'de' ? x.c.w : y.c.w, pic = x.c.type === 'de' ? y.c.w : x.c.w;
-              okul('record', x.c.type === y.c.type
-                ? { q: `${x.c.w.de} / ${y.c.w.de}`, expected: 'kelime + resim', given: 'aynı türden iki kart', ok: false }
-                : { q: `${de.art} ${de.de}`, expected: de.tr, given: pic.tr, ok: false });
-              beep(false);
-              setTimeout(() => { x.b.classList.remove('flip'); y.b.classList.remove('flip'); open = []; }, 900);
-            }
-            // İdeal: 6 çift → yanlış hamleler başarı oranını düşürür
-            s.total = moves;
-            s.correct = found;
-          }
-        };
-        grid.appendChild(b);
+    name: 'Hafıza Kartları', de: 'Das Gedächtnisspiel', code: 'WORTSCHATZ', len: '6-8 çift', skill: 'Kelimeyi artikeli ve anlamıyla eşleştirebilme',
+    desc: 'Kartlara iyi bak, sonra çevir: Almanca kelimeyi resmiyle eşleştir. Üst üste bulursan kombo; ne kadar az hamle, o kadar çok yıldız.',
+    async start(area, s) {
+      area.innerHTML = '<p class="hint">Kartlar hazırlanıyor…</p>';
+      let sets = [];
+      try { if (window.Okul && !Okul.demo && Okul.wordSets) sets = await Okul.wordSets(); } catch (e) { console.warn('Kelime setleri okunamadı', e); }
+      if (session !== s || !s.active) return;
+      const byKey = new Map(allWords().map((w) => [`${w.art} ${w.de}`, w]));
+      sets = sets.map((x) => ({ ...x, words: (x.kelimeler || []).map((k) => byKey.get(k)).filter(Boolean) })).filter((x) => x.words.length >= 4);
+      if (!sets.length) return memoryBoard(area, s, wordPool());
+      const theme = THEMES.find((t) => t.id === state.theme);
+      area.innerHTML = `<p class="hint">Hangi kelimelerle oynamak istersin?</p><div class="mem-sets"></div>`;
+      const box = area.querySelector('.mem-sets');
+      const choose = (label, words) => { okul('startSession', { app: 'almanca', game: 'memory', theme: label }); memoryBoard(area, s, words); };
+      sets.forEach((x, i) => {
+        const b = el('button', 'mem-set', `<span class="ms-emoji">${x.words.slice(0, 3).map((w) => w.e).join('')}</span><b>${escH(x.ad)}</b><small>Öğretmeninin seti · ${x.words.length} kelime</small>`);
+        b.style.setProperty('--i', i);
+        b.onclick = () => choose(`set:${x.ad}`.slice(0, 40), x.words);
+        box.appendChild(b);
       });
-      area.appendChild(el('p', 'hint', 'Kartları çevir, Almanca kelimeyi doğru resimle eşleştir!'));
-      area.appendChild(grid);
+      const own = el('button', 'mem-set own', `<span class="ms-emoji">🎲</span><b>${theme ? theme.tr : 'Bütün temalar'}</b><small>Seçili temadan karışık kelimeler</small>`);
+      own.style.setProperty('--i', sets.length);
+      own.onclick = () => memoryBoard(area, s, wordPool());
+      box.appendChild(own);
     },
   },
 

@@ -42,10 +42,6 @@ python3 -m http.server 8000   # → http://localhost:8000
 
 **Atari oyunları** (`js/arcade.js`, tuval üzerinde; Max gardırobuyla birlikte oynar):
 
-- **🏃 Artikel Koşusu** — yandan görünüşlü sonsuz koşu. Taşların üstünden zıpla, kuşların altından
-  geç, altın topla. Artikel kapısında üst üste üç balon var (der/die/das, sırası her seferinde
-  değişir): yerde kal = alt, zıpla = orta, havada bir daha zıpla = üst balon. Kalkan, can ve
-  çift puan yıldızı; rekor mesafede bayrak.
 - **🥷 Artikel Ninja** — kelime kartları havaya fırlar; parmağınla yalnızca üstte yazan artikeldekileri
   kes. Yanlış artikeli ya da bombayı kesmek can götürür; tek hamlede birkaç kelime = kombo.
   Hedef artikel 11-15 saniyede bir değişir.
@@ -56,14 +52,12 @@ python3 -m http.server 8000   # → http://localhost:8000
 
 Diğer oyunlar:
 
-- **☄️ Kelime Avcısı** — uzay atari oyunu. Üstte Türkçe kelime yazar; yukarıdan düşen
-   meteorlarda Almancası (artikeliyle) var. Doğru meteoru vur, lazer onu patlatsın. Yanlışı
-   vurmak ya da doğruyu kaçırmak bir can götürür (3 can). Her 5 isabette seviye atlanır,
-   meteorlar hızlanır ve çoğalır.
 - **🎯 Artikel Avı** — 60 saniye. Kelime ve resmi çıkar, *der / die / das*
    butonlarından birine bas. Üst üste doğrular kombo puanı verir (x2'ye kadar bonus).
-- **🃏 Hafıza Kartları** — 6 çift kart. Almanca kelime kartını resim kartıyla eşleştir.
-   Az hamle = yüksek yıldız.
+- **🃏 Hafıza Kartları** — 6 çift kart (geniş ekranda 8). Kartlar desteden dağıtılır, kısa bir
+   an açık kalır (ezber), sonra kapanır; Almanca kelime kartını resim kartıyla eşleştir.
+   Üst üste eşleşme kombo puanı verir; az hamle = yüksek yıldız. Öğretmenin hazırladığı
+   **kelime setleri** varsa öğrenci oyuna başlarken setlerden birini seçer.
 - **👂 Hör zu!** — 10 tur. Hoparlöre bas, Almanca kelimeyi dinle, 4 resimden doğrusunu seç.
 - **🚂 Cümle Treni** — 6 cümle. Türkçe anlamı verilen cümlenin kelime vagonlarını
    trene sırayla tak. Doğruysa tren yola çıkar.
@@ -226,6 +220,15 @@ yaptığı kelimeleri görür.
 > Kurallar değiştiyse (`firebase/firestore.rules`) Firebase konsolunda *Firestore → Rules* sekmesine
 > dosyanın güncel hâlini yapıştırıp **Publish** etmeyi unutmayın.
 
+### Hafıza oyunu kelime setleri
+
+Rapor panelindeki **Hafıza oyunu kelimeleri** bölümünde **Yeni kelime seti**'ne basın; sete ad
+verin, kimlerin göreceğini seçin (bütün sınıflar ya da belirli sınıflar) ve havuzdaki kelimelere
+tıklayarak sete ekleyin (en az 4, en fazla 60; bir temanın hepsini tek tıkla seçebilirsiniz).
+Öğrenci Hafıza Kartları'nı açınca kendi sınıfına açık setleri ve "seçili temadan karışık"
+seçeneğini görür; her oyunda setten 6-8 kelime karışık gelir. Kelime havuzu `js/data.js`'tir;
+havuza yeni kelime eklendiğinde setlerde de seçilebilir.
+
 ### Kaydedilen veriler
 
 | Koleksiyon | İçerik | Kim okur |
@@ -235,6 +238,7 @@ yaptığı kelimeleri görür.
 | `duels/{kod}` (+ `players`, `answers`, `secret`) | canlı düello: durum, oyuncu puanları, cevaplar, cevap anahtarı | öğrenci: kendi katılımı ve sıralama; cevap anahtarı ve cevaplar yalnızca düelloyu açan öğretmen |
 | `sinif_listesi/{e-posta}` | sınıf, ad soyad (öğretmenin yüklediği liste) | yönetici; öğrenci yalnızca kendi kaydını |
 | `lig/{hafta}/oyuncular/{uid}` | Haftalık Sınıf Ligi: kısaltılmış ad, sınıf, haftalık XP (hafta: `2026-W40`) | okulun bütün hesapları |
+| `hafiza_setleri/{id}` | Hafıza oyunu kelime setleri: ad, kelimeler (`der Hund` biçiminde), hangi sınıflar görür | okulun bütün hesapları (yalnızca yönetici yazar) |
 | `admins/{e-posta}` | yönetici listesi (yalnızca konsoldan düzenlenir) | — |
 
 ### Başka bir uygulamaya eklemek (ör. Nokta'nın Filmleri)
@@ -304,7 +308,7 @@ yedek olarak kullanılabilir: `python3 tools/generate_audio.py --engine piper --
 - [x] Okul hesabıyla giriş, çalışma kaydı ve yönetici rapor paneli
 - [x] **Sınıf ve şube** bilgisi (öğretmenin yüklediği sınıf listesi)
 - [x] **Sınıf Düellosu:** Öğretmen bir kod paylaşır, öğrenciler aynı anda yarışır
-- [x] Kelime Avcısı, Max'in Gardırobu ve Haftalık Sınıf Ligi
+- [x] Atari oyunları (Ninja, Uçan Max, Yılan), Max'in Gardırobu ve Haftalık Sınıf Ligi
 - [ ] **Aralıklı tekrar (spaced repetition):** Yanlış yapılan kelimeler daha sık sorulsun
 - [ ] **Konuşma oyunu:** Mikrofonla kelimeyi söyle, konuşma tanıma ile kontrol et
 - [ ] **Çoğul hali (Plural)** ve **akkusativ** (einen/eine/ein) mini oyunları

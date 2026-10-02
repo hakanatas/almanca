@@ -10,7 +10,7 @@ const APPS = {
   almanca: {
     name: 'Deutsch Macerası',
     games: { run: 'Artikel Koşusu', ninja: 'Artikel Ninja', fly: 'Uçan Max', snake: 'Artikel Yılanı', hunt: 'Kelime Avcısı', duello: 'Sınıf Düellosu', artikel: 'Artikel Avı', memory: 'Hafıza Kartları', listen: 'Hör zu!', satz: 'Cümle Treni', verb: 'Fiil Roketi' },
-    badges: { ilk: 'İlk Adım', kombo10: 'Artikel Ninja', mukemmel: 'Kusursuz', kasif: 'Kaşif', seri3: 'Ateşli', seviye5: 'Deutsch-König' },
+    badges: { ilk: 'İlk Adım', kombo10: 'Seri Ustası', mukemmel: 'Kusursuz', kasif: 'Kaşif', seri3: 'Ateşli', seviye5: 'Deutsch-König' },
   },
 };
 const appName = (a) => APPS[a]?.name || a;
