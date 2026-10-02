@@ -1,0 +1,13 @@
+{
+  "name": "Deutsch Macerası",
+  "short_name": "Deutsch",
+  "description": "Almancayı ikinci yabancı dil olarak öğrenen öğrenciler için eğlenceli oyunlar.",
+  "lang": "tr",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f1eadc",
+  "theme_color": "#f1eadc",
+  "icons": [
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%95%3C/text%3E%3C/svg%3E", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
