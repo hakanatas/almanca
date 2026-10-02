@@ -430,7 +430,7 @@ const GAMES = {
       const hearts = () => { $('#hud-info').innerHTML = `<span class="hearts">${'❤️'.repeat(lives)}${'🤍'.repeat(3 - lives)}${shield ? '🛡️' : ''}</span>`; };
       hearts();
       const W = () => runner.clientWidth;
-      const laneTop = (i) => `calc(${i} * 100% / 3)`;
+      const laneTop = (i) => `calc(var(--sky) + ${i} * var(--lh))`;
       const setLane = (i) => {
         if (over) return;
         lane = Math.max(0, Math.min(2, i));
