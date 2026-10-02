@@ -126,7 +126,7 @@ Altyapı Firebase'dir (Google girişi + Firestore veritabanı), ücretsiz katman
 `firebase/firestore.rules` kurallarında da yapılır: başka bir Google hesabıyla giren kişi
 hiçbir veriyi okuyamaz, yazamaz. Öğrenci yalnızca kendi kayıtlarını görür, kayıtlar
 sonradan değiştirilemez, toplu raporu yalnızca yönetici okur. Kurallar Firestore emülatöründe
-28 senaryoyla test edildi (sahte alan adları, başkası adına kayıt, yetkisiz öğretmen vb.).
+37 senaryoyla test edildi (sahte alan adları, başkası adına kayıt, yetkisiz öğretmen vb.).
 
 Ayar dosyası boşken oyun **deneme modunda** girişsiz çalışır ve hiçbir veri göndermez.
 
@@ -162,12 +162,32 @@ Ayar dosyası boşken oyun **deneme modunda** girişsiz çalışır ve hiçbir v
 > **Kişisel veriler:** Kaydedilen bilgiler ad, okul e-postası ve oyun sonuçlarıdır. Öğrencileri
 > ve velileri bilgilendirmeniz (KVKK aydınlatma) önerilir.
 
+### Sınıf listesi ve öğretmen raporu
+
+Öğrenciler sınıf seçmez; sınıfları öğretmen yükler. Rapor panelinin (`v2/admin.html`) altındaki
+**Sınıf listesi** bölümüne Excel'den *e-posta*, *sınıf* ve isterseniz *ad soyad* sütunlarını kopyalayıp
+yapıştırın ya da CSV dosyası seçin. Sütun sırası önemli değil; "9A", "9/A", "9 A" hepsi `9-A` olarak okunur.
+Önizlemede okunamayan satırlar nedeniyle listelenir; **Listeyi kaydet** ile yüklenir. Aynı e-posta tekrar
+yüklenirse sınıfı güncellenir. Liste Firestore'da `sinif_listesi` koleksiyonunda durur, GitHub'a yazılmaz.
+
+Panelde: sınıf filtresi, sınıf özet tablosu (listede / giriş yapan / çalışan / süre / doğruluk),
+öğrenci tablosunda sınıf, seviye, XP, rozet; öğrenci ayrıntısında rozetler, rekorlar, oyunlara göre
+doğruluk, yanlış yaptıkları ve bütün oturumları. Listede olup hiç girmemiş öğrenciler "hiç girmedi",
+girip listede olmayanlar "listede yok" olarak görünür.
+
+Öğrenci de oyunun ana ekranındaki **Çalışmalarım** bölümünde kendi son oyunlarını ve en çok yanlış
+yaptığı kelimeleri görür.
+
+> Kurallar değiştiyse (`firebase/firestore.rules`) Firebase konsolunda *Firestore → Rules* sekmesine
+> dosyanın güncel hâlini yapıştırıp **Publish** etmeyi unutmayın.
+
 ### Kaydedilen veriler
 
 | Koleksiyon | İçerik | Kim okur |
 |---|---|---|
 | `users/{uid}` | ad, e-posta, öğrenci/öğretmen, ilk ve son giriş, uygulama ilerlemesi (XP, rozetler) | kişinin kendisi, yönetici |
 | `sessions/{id}` | uygulama, oyun, tema, başlangıç/bitiş, etkin süre (sekme arkadayken saat durur), doğru/yanlış sayısı, puan, tamamlandı mı, her cevap (soru, doğrusu, verilen, süre) | kişinin kendisi, yönetici |
+| `sinif_listesi/{e-posta}` | sınıf, ad soyad (öğretmenin yüklediği liste) | yönetici |
 | `admins/{e-posta}` | yönetici listesi (yalnızca konsoldan düzenlenir) | — |
 
 ### Başka bir uygulamaya eklemek (ör. Nokta'nın Filmleri)

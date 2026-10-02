@@ -268,7 +268,8 @@ function finish() {
   if (state.streak >= 3) give('seri3');
   if (levelOf(state.xp) >= 5) give('seviye5');
   save();
-  okul('endSession', { completed: true, score: s.score });
+  const ended = okul('endSession', { completed: true, score: s.score });
+  if (ended && ended.then) ended.then(() => renderMyWork());
 
   const titles = ['Weiter üben!', 'Gut gemacht!', 'Sehr gut!', 'Ausgezeichnet!'];
   $('#res-title').textContent = titles[stars];
@@ -617,6 +618,43 @@ $('#btn-reset').onclick = (e) => {
 };
 
 
+// ---------- Çalışmalarım (yalnızca okul hesabıyla girişte) ----------
+const escH = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+async function renderMyWork() {
+  const box = $('#my-work');
+  if (!box || !window.Okul || Okul.demo || !Okul.user || Okul.user.uid === 'local') return;
+  let list;
+  try { list = await Okul.mySessions('almanca', 40); } catch (e) { console.warn('Çalışmalar okunamadı', e); return; }
+  box.hidden = false;
+  const name = (g) => (GAMES[g] ? GAMES[g].name : g);
+  const fmtSure = (sec) => (sec >= 60 ? `${Math.round(sec / 60)} dk` : `${Math.round(sec)} sn`);
+  const weekAgo = Date.now() - 7 * 86400000;
+  const week = list.filter((x) => x.endedAt && x.endedAt.getTime() >= weekAgo);
+  const sum = (arr, k) => arr.reduce((a, x) => a + (x[k] || 0), 0);
+  const wTotal = sum(week, 'total'), wCorrect = sum(week, 'correct');
+  $('#my-summary').innerHTML = list.length
+    ? `<div><small>Bu hafta</small><b>${fmtSure(sum(week, 'durationSec'))}</b></div>
+       <div><small>Oyun</small><b>${week.length}</b></div>
+       <div><small>Doğruluk</small><b>${wTotal ? '%' + Math.round((wCorrect / wTotal) * 100) : '–'}</b></div>`
+    : '<p class="hint">Henüz kayıtlı oyunun yok. Bir oyun bitirdiğinde burada görünecek.</p>';
+  $('#my-list').innerHTML = list.slice(0, 8).map((x) => `<li>
+      <span class="my-game">${escH(name(x.game))}</span>
+      <span class="my-meta">${x.endedAt ? x.endedAt.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : ''} · ${fmtSure(x.durationSec || 0)}${x.completed ? '' : ' · yarıda'}</span>
+      <span class="my-score">${Number(x.correct) || 0}/${Number(x.total) || 0}</span></li>`).join('');
+  // En çok yanlış yapılan sorular (son 40 oyun)
+  const by = new Map();
+  list.forEach((x) => (x.items || []).forEach((it) => {
+    if (it.ok) return;
+    const k = `${x.game}|${it.q}|${it.expected}`;
+    const r = by.get(k) || { q: it.q, expected: it.expected, given: it.given, n: 0 };
+    r.n++; by.set(k, r);
+  }));
+  const missed = [...by.values()].sort((a, b) => b.n - a.n).slice(0, 6);
+  $('#my-missed').innerHTML = missed.length
+    ? missed.map((m) => `<li><b>${escH(m.q)}</b> → <span class="my-ok">${escH(m.expected)}</span><small>Senin cevabın: ${escH(m.given || '–')} · ${m.n} kez</small></li>`).join('')
+    : '<li class="hint">Yanlışın yok, harika!</li>';
+}
+
 // ---------- Başlangıç ----------
 document.body.insertAdjacentHTML('afterbegin', INK_DEFS);
 $('#brushline').innerHTML = BRUSHLINE;
@@ -638,7 +676,7 @@ renderHome();
 // Giriş tamamlanınca o hesabın ilerlemesini yükle. okul.js bir modül olduğu için bu
 // dosyadan sonra çalışır; hazır olduğunda window.Okul tanımlanır.
 (function waitForOkul(tries = 0) {
-  if (window.Okul) Okul.onReady((u, progress) => useProfile(u.uid, progress.almanca));
+  if (window.Okul) Okul.onReady((u, progress) => { useProfile(u.uid, progress.almanca); renderMyWork(); });
   else if (tries < 100) setTimeout(() => waitForOkul(tries + 1), 50);
   else useProfile('local', null); // modül yüklenemedi: yerel kayıtla devam
 })();

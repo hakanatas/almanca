@@ -54,6 +54,7 @@
             <option value="365">Son 1 yıl</option>
           </select>
         </label>
+        <label>Sınıf <select id="f-sinif"><option value="">Bütün sınıflar</option></select></label>
         <label>Uygulama <select id="f-app"><option value="">Hepsi</option></select></label>
         <label>Oyun <select id="f-game"><option value="">Hepsi</option></select></label>
         <label>Kim <select id="f-kind"><option value="ogrenci" selected>Öğrenciler</option><option value="ogretmen">Öğretmenler</option><option value="">Herkes</option></select></label>
@@ -70,11 +71,18 @@
       </section>
 
       <section class="panel">
+        <div class="panel-head"><h2 class="section-title">Sınıflar</h2></div>
+        <p class="section-sub">Sınıf listesine göre. Bir sınıfa tıklayınca bütün rapor o sınıfa süzülür; tekrar tıklayınca kalkar.</p>
+        <p id="classes-empty" class="muted" hidden>Henüz sınıf listesi yüklenmedi. Aşağıdaki <b>Sınıf listesi</b> bölümünden yükleyin.</p>
+        <div class="table-wrap"><table id="t-classes"></table></div>
+      </section>
+
+      <section class="panel">
         <div class="panel-head">
           <h2 class="section-title">Öğrenciler</h2>
           <button type="button" class="btn ghost small" id="csv-students">CSV indir</button>
         </div>
-        <p class="section-sub">Bir satıra tıklayınca öğrencinin ayrıntıları açılır. Başlıklara tıklayarak sıralayın.</p>
+        <p class="section-sub">Sınıf listesindeki herkes ve giriş yapan bütün hesaplar. Bir satıra tıklayınca öğrencinin ayrıntıları açılır; başlıklara tıklayarak sıralayın.</p>
         <div class="table-wrap"><table id="t-students"></table></div>
       </section>
 
@@ -92,6 +100,24 @@
         </div>
         <p class="section-sub">Derste tekrar etmeye değer konular: en az 3 kez sorulmuş, yanlış oranı en yüksek sorular.</p>
         <div class="table-wrap"><table id="t-missed"></table></div>
+      </section>
+
+      <section class="panel roster" id="roster">
+        <div class="panel-head"><h2 class="section-title">Sınıf listesi</h2></div>
+        <p class="section-sub">Öğrencilerin sınıfları buradan yüklenir; öğrenciler sınıf seçmez. Excel'de <b>e-posta</b>, <b>sınıf</b> ve isterseniz <b>ad soyad</b> sütunlarını seçip kopyalayın ve aşağıya yapıştırın ya da CSV dosyası seçin. Sütun sırası önemli değil; "9A", "9/A", "9 A" hepsi 9-A olarak okunur. Aynı e-posta tekrar yüklenirse sınıfı güncellenir.</p>
+        <p id="r-current" class="r-current"></p>
+        <div class="r-input">
+          <label for="r-text" class="r-label">Listeyi yapıştırın</label>
+          <textarea id="r-text" rows="6" placeholder="ali.yilmaz@stu.alkev.k12.tr	9-A	Ali Yılmaz&#10;ayse.kaya@stu.alkev.k12.tr	9-B	Ayşe Kaya"></textarea>
+          <div class="row left">
+            <label class="btn ghost small file-btn">CSV dosyası seç<input id="r-file" type="file" accept=".csv,.txt,.tsv,text/csv,text/plain"></label>
+            <button type="button" class="btn small" id="r-save" disabled>Listeyi kaydet</button>
+            <button type="button" class="btn ghost small" id="r-clear" hidden>Listeyi temizle</button>
+            <span class="status" id="r-status" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+        <div id="r-preview"></div>
+        <p class="hint-r">Öğrenci adları ve e-postaları yalnızca bu Firebase projesinde saklanır, GitHub'a yazılmaz; yalnızca yöneticiler görebilir.</p>
       </section>
     </main>
   </div>

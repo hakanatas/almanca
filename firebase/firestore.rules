@@ -27,6 +27,18 @@ service cloud.firestore {
       allow list, write: if false;
     }
 
+    // Sınıf listesi: belge kimliği öğrencinin e-postası (küçük harf), içinde sınıf ve ad.
+    // Öğretmenin verdiği listeden rapor panelinde yüklenir; yalnızca yöneticiler okur ve yazar.
+    match /sinif_listesi/{email} {
+      allow read, delete: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['sinif', 'ad', 'guncelleyen', 'guncelleme'])
+        && request.resource.data.sinif is string
+        && request.resource.data.sinif.size() > 0 && request.resource.data.sinif.size() <= 20
+        && (!('ad' in request.resource.data) || (request.resource.data.ad is string && request.resource.data.ad.size() <= 80))
+        && email.matches('^[^@]+@(stu[.])?alkev[.]k12[.]tr$');
+    }
+
     // Profil + ilerleme (XP, rozetler). Herkes yalnızca kendi belgesini yazar.
     match /users/{uid} {
       allow get: if schoolUser() && (request.auth.uid == uid || isAdmin());
