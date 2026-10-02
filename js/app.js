@@ -21,7 +21,7 @@ const todayStr = (d = new Date()) => d.toISOString().slice(0, 10);
 
 // ---------- Kayıt (localStorage) ----------
 const SAVE_KEY = 'deutsch-macerasi-v1';
-const defaultState = () => ({ xp: 0, streak: 0, lastDay: null, theme: 'all', best: {}, played: {}, badges: [] });
+const defaultState = () => ({ xp: 0, streak: 0, lastDay: null, theme: 'all', best: {}, played: {}, badges: [], outfit: {} });
 let state = defaultState();
 // Her hesabın ilerlemesi ayrı tutulur (okuldaki ortak bilgisayarlar için).
 // Girişli kullanımda asıl kayıt buluttadır (Okul.saveProgress); yerel kopya hız içindir.
@@ -38,6 +38,7 @@ function useProfile(uid, cloud) {
   const best = [cloud, local].filter((x) => x && typeof x.xp === 'number').sort((a, b) => b.xp - a.xp)[0];
   state = Object.assign(defaultState(), best || {});
   try { localStorage.setItem(saveKey, JSON.stringify(state)); } catch (e) { /* yoksay */ }
+  wearOutfit();
   renderHome();
 }
 // Okul modülüne gönderim (modül yüklenmemişse sessizce atlanır)
@@ -48,6 +49,55 @@ const levelOf = (xp) => Math.floor(Math.sqrt(xp / 50)) + 1;
 const xpFor = (lvl) => 50 * (lvl - 1) ** 2;
 
 const el_ = (...a) => el(...a);
+
+// ---------- Max'in Gardırobu ----------
+// Eşyalar seviye atladıkça (ya da rozetle) açılır; seçim state.outfit'te saklanır.
+const SLOT_NAMES = { hat: 'Başa', eyes: 'Göze', neck: 'Boyna' };
+const itemOpen = (a, s = state) => (a.level ? levelOf(s.xp) >= a.level : s.badges.includes(a.badge));
+const itemLock = (a) => (a.level ? `Seviye ${a.level}` : `${(BADGES.find((b) => b.id === a.badge) || {}).name || 'Rozet'} rozeti`);
+function wearOutfit() {
+  const o = state.outfit || (state.outfit = {});
+  // Kilidi kapalı bir eşya takılı kalmasın (ör. ilerleme sıfırlandıysa)
+  Object.keys(o).forEach((k) => { const a = ACCESSORIES[o[k]]; if (!a || !itemOpen(a)) delete o[k]; });
+  window.MAX_OUTFIT = o;
+  if ($('#hero-max')) $('#hero-max').innerHTML = maxSVG();
+  if ($('#gate-max')) $('#gate-max').innerHTML = maxSVG();
+}
+// Yalnızca kafayı gösteren küçük Max (eşya düğmeleri için)
+function maxHead(outfit) {
+  const keep = window.MAX_OUTFIT;
+  window.MAX_OUTFIT = outfit;
+  const svg = maxSVG().replace('viewBox="0 0 240 160"', 'viewBox="148 2 88 108"');
+  window.MAX_OUTFIT = keep;
+  return svg;
+}
+function renderWardrobe() {
+  const box = $('#wardrobe');
+  if (!box) return;
+  const o = state.outfit || {};
+  box.innerHTML = `<div class="wd-preview">${maxSVG('wd-max')}</div><div class="wd-slots"></div>`;
+  const slots = box.querySelector('.wd-slots');
+  Object.entries(SLOT_NAMES).forEach(([slot, label]) => {
+    const wrap = el('div', 'wd-slot', `<h3>${label}</h3><div class="wd-items"></div>`);
+    const items = wrap.querySelector('.wd-items');
+    const none = el('button', 'wd-item', `${maxHead({})}<b>Hiçbiri</b>`);
+    none.type = 'button';
+    none.setAttribute('aria-pressed', String(!o[slot]));
+    none.onclick = () => { delete state.outfit[slot]; save(); wearOutfit(); renderWardrobe(); };
+    items.appendChild(none);
+    Object.entries(ACCESSORIES).filter(([, a]) => a.slot === slot).forEach(([id, a]) => {
+      const open = itemOpen(a);
+      const b = el('button', 'wd-item', `${maxHead({ [slot]: id })}<b>${a.name}</b><small>${open ? '' : UI_ICONS.lock + ' ' + itemLock(a)}</small>`);
+      b.type = 'button';
+      b.disabled = !open;
+      b.setAttribute('aria-pressed', String(o[slot] === id));
+      if (!open) b.title = `${itemLock(a)} ile açılır`;
+      b.onclick = () => { state.outfit[slot] = id; save(); wearOutfit(); renderWardrobe(); beep(true); };
+      items.appendChild(b);
+    });
+    slots.appendChild(wrap);
+  });
+}
 
 // ---------- Ses ----------
 let audioCtx;
@@ -133,7 +183,7 @@ const BADGES = [
   { id: 'ilk', icon: '🎉', name: 'İlk Adım', desc: 'İlk oyununu bitir' },
   { id: 'kombo10', icon: '⚡', name: 'Artikel Ninja', desc: 'Artikel oyununda 10\'luk seri yap' },
   { id: 'mukemmel', icon: '💯', name: 'Kusursuz', desc: 'Bir oyunu hatasız bitir' },
-  { id: 'kasif', icon: '🧭', name: 'Kaşif', desc: 'Beş oyunun hepsini dene' },
+  { id: 'kasif', icon: '🧭', name: 'Kaşif', desc: 'Bütün oyunları dene' },
   { id: 'seri3', icon: '🔥', name: 'Ateşli', desc: '3 gün üst üste oyna' },
   { id: 'seviye5', icon: '👑', name: 'Deutsch-König', desc: '5. seviyeye ulaş' },
 ];
@@ -197,6 +247,7 @@ function renderHome() {
     const has = state.badges.includes(b.id);
     bl.appendChild(el('div', 'stamp' + (has ? ' got' : ''), `<span class="seal-ring">${HAND_CIRCLE}${has ? `<span class="emoji">${b.icon}</span>` : UI_ICONS.lock}</span><b>${b.name}</b><small>${b.desc}</small>`));
   });
+  renderWardrobe();
   show('screen-home');
 }
 
@@ -259,6 +310,7 @@ function finish() {
   const stars = ratio >= 0.9 ? 3 : ratio >= 0.7 ? 2 : ratio >= 0.4 ? 1 : 0;
   const xpGain = Math.round(s.score / 2) + stars * 5;
   const oldLvl = levelOf(state.xp);
+  const closedBefore = Object.keys(ACCESSORIES).filter((k) => !itemOpen(ACCESSORIES[k]));
   state.xp += xpGain;
   state.played[s.id] = (state.played[s.id] || 0) + 1;
   const newRecord = state.best[s.id] == null || s.score > state.best[s.id];
@@ -282,6 +334,8 @@ function finish() {
   if (state.streak >= 3) give('seri3');
   if (levelOf(state.xp) >= 5) give('seviye5');
   save();
+  const lg = okul('leagueAdd', xpGain);
+  if (lg && lg.then) lg.then((ok) => { if (ok) renderLeague(); });
   const ended = okul('endSession', { completed: true, score: s.score });
   if (ended && ended.then) ended.then(() => renderMyWork());
 
@@ -295,7 +349,8 @@ function finish() {
   const newLvl = levelOf(state.xp);
   $('#res-level').innerHTML = newLvl > oldLvl ? ` · <b>Seviye ${newLvl}!</b>` : '';
   countUp($('#res-xp'), xpGain);
-  $('#res-badges').innerHTML = earned.map((b) => `<div class="new-badge"><span class="seal-ring">${HAND_CIRCLE}<span class="emoji">${b.icon}</span></span><span>Yeni rozet<b>${b.name}</b></span></div>`).join('');
+  $('#res-badges').innerHTML = earned.map((b) => `<div class="new-badge"><span class="seal-ring">${HAND_CIRCLE}<span class="emoji">${b.icon}</span></span><span>Yeni rozet<b>${b.name}</b></span></div>`).join('')
+    + closedBefore.filter((k) => itemOpen(ACCESSORIES[k])).map((k) => `<div class="new-badge new-item"><span class="wd-thumb">${maxHead({ [ACCESSORIES[k].slot]: k })}</span><span>Gardıropta yeni eşya<b>${ACCESSORIES[k].name}</b></span></div>`).join('');
   show('screen-result');
   if (stars >= 2 || earned.length) confetti();
 }
@@ -496,6 +551,129 @@ const GAMES = {
         if (session !== s || !s.active) { clearInterval(tick); return; }
         if (n > 0) flash(`<b class="count">${n}</b>`, 'count');
         else { clearInterval(tick); flash('Los!', 'count'); raf = requestAnimationFrame(frame); }
+      }, 650);
+    },
+  },
+
+  // Kelime Avcısı: Türkçe anlamı verilen kelimenin meteorunu vur
+  hunt: {
+    name: 'Kelime Avcısı', de: 'Der Wortjäger', code: 'WORTSCHATZ', len: '3 can', skill: 'Kelimenin anlamını hızla tanıyabilme',
+    desc: 'Üstte Türkçesi yazan kelimenin Almanca meteorunu vur! Yanlış meteor ya da kaçan doğru meteor can götürür; her 5 doğruda seviye atlarsın.',
+    start(area, s) {
+      let lives = 3, level = 1, hits = 0, round = null, meteors = [], last = 0, raf = 0, over = false;
+      let pool = shuffle(wordPool()), pi = 0;
+      const all = allWords();
+      area.innerHTML = `
+        <div class="space" id="space" aria-label="Uzay: doğru kelimenin meteoruna dokun">
+          <div class="space-stars"></div>
+          <div class="space-target" id="starget"></div>
+          <div class="space-field" id="sfield"></div>
+          <svg class="laser" id="slaser" aria-hidden="true"><line id="sline" x1="0" y1="0" x2="0" y2="0"/></svg>
+          <div class="space-ship" id="sship">${ICONS.verb}</div>
+          <div class="runner-msg" id="smsg" hidden></div>
+        </div>
+        <p class="hint">Üstteki Türkçe kelimenin Almancasını taşıyan meteora dokun.</p>`;
+      const space = $('#space'), field = $('#sfield');
+      const hearts = () => { $('#hud-info').innerHTML = `<span class="hearts">${'❤️'.repeat(lives)}${'🤍'.repeat(3 - lives)}</span> <small>Sv ${level}</small>`; };
+      hearts();
+      const msg = (text, cls) => {
+        const m = $('#smsg'); m.innerHTML = text; m.className = 'runner-msg ' + cls; m.hidden = false;
+        clearTimeout(msg.t); msg.t = setTimeout(() => { m.hidden = true; }, cls === 'bad' ? 1500 : 800);
+      };
+      const H = () => field.clientHeight;
+      const fallTime = () => Math.max(3.4, 8 - level * 0.7);           // bir meteorun düşme süresi (sn)
+      const count = () => Math.min(5, 2 + Math.ceil(level / 2));        // ekrandaki meteor sayısı
+
+      const newRound = () => {
+        if (over) return;
+        if (pi >= pool.length) { pool = shuffle(wordPool()); pi = 0; }
+        const w = pool[pi++];
+        const others = shuffle(all.filter((x) => x.tr !== w.tr && x.de !== w.de)).slice(0, count() - 1);
+        const words = shuffle([w, ...others]);
+        $('#starget').innerHTML = `<small>Vur:</small><b>${w.tr}</b>`;
+        $('#starget').classList.remove('pop'); void $('#starget').offsetWidth; $('#starget').classList.add('pop');
+        round = { w, done: false };
+        const lanes = shuffle([...Array(words.length).keys()]);
+        meteors = words.map((x, i) => {
+          const m = el_('button', 'meteor', `<span>${x.art} ${x.de}</span>`);
+          m.type = 'button';
+          const lane = lanes[i];
+          m.style.left = `${4 + (lane * 92) / words.length}%`;
+          m.style.width = `${Math.max(22, 88 / words.length)}%`;
+          field.appendChild(m);
+          const o = { x, el: m, y: -0.05 - Math.random() * 0.3, dead: false, speed: (0.85 + Math.random() * 0.3) / fallTime() };
+          m.addEventListener('pointerdown', (e) => { e.preventDefault(); shoot(o); });
+          return o;
+        });
+      };
+      const fire = (o) => {
+        const sr = space.getBoundingClientRect(), mr = o.el.getBoundingClientRect(), shr = $('#sship').getBoundingClientRect();
+        const x1 = shr.left + shr.width / 2 - sr.left, y1 = shr.top - sr.top + 6, x2 = mr.left + mr.width / 2 - sr.left, y2 = mr.top + mr.height / 2 - sr.top;
+        const line = $('#sline');
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        $('#slaser').classList.remove('on'); void $('#slaser').offsetWidth; $('#slaser').classList.add('on');
+        $('#sship').style.transform = `translateX(-50%) rotate(${Math.atan2(x2 - x1, y1 - y2) * 57.3}deg)`;
+      };
+      const clearRound = (delay) => {
+        round.done = true;
+        meteors.forEach((m) => { if (!m.dead) { m.dead = true; m.el.classList.add('fade'); } });
+        later(s, () => { field.innerHTML = ''; meteors = []; newRound(); }, delay);
+      };
+      const shoot = (o) => {
+        if (over || !round || round.done || o.dead) return;
+        fire(o);
+        const w = round.w, ok = o.x === w;
+        const item = { q: w.tr, expected: `${w.art} ${w.de}`, given: `${o.x.art} ${o.x.de}` };
+        speak(`${o.x.art} ${o.x.de}`, 1);
+        if (ok) {
+          o.dead = true; o.el.classList.add('boom');
+          answer(true, '', item, { quiet: true });
+          addScore(level * 2);
+          hits++;
+          if (hits % 5 === 0) { level++; msg(`Seviye ${level}! 🚀`, 'ok'); } else msg(`${w.art} ${w.de} = ${w.tr}`, 'ok');
+          hearts();
+          setProgress(Math.min(1, hits / 30));
+          clearRound(550);
+        } else {
+          o.dead = true; o.el.classList.add('wrongm');
+          lives--; hearts();
+          answer(false, '', item, { quiet: true });
+          msg(`${o.x.de} = ${o.x.tr}. Aranan: <b>${w.art} ${w.de}</b>`, 'bad');
+          space.classList.remove('hurt'); void space.offsetWidth; space.classList.add('hurt');
+          if (lives <= 0) end(); else clearRound(1300);
+        }
+      };
+      const missed = () => {
+        const w = round.w;
+        lives--; hearts();
+        answer(false, '', { q: w.tr, expected: `${w.art} ${w.de}`, given: '(kaçtı)' }, { quiet: true });
+        msg(`Kaçırdın! <b>${w.art} ${w.de}</b> = ${w.tr}`, 'bad');
+        space.classList.remove('hurt'); void space.offsetWidth; space.classList.add('hurt');
+        if (lives <= 0) end(); else clearRound(1300);
+      };
+      const frame = (t) => {
+        if (over) return;
+        const dt = Math.min(0.05, last ? (t - last) / 1000 : 0); last = t;
+        meteors.forEach((m) => {
+          if (m.dead) return;
+          m.y += m.speed * dt;
+          m.el.style.transform = `translateY(${m.y * H()}px)`;
+          if (m.y > 0.84 && round && !round.done) {
+            if (m.x === round.w) missed();
+            else { m.dead = true; m.el.classList.add('fade'); }
+          }
+        });
+        raf = requestAnimationFrame(frame);
+      };
+      const end = () => { over = true; cancelAnimationFrame(raf); later(s, finish, 1400); };
+      s.cleanup = () => { over = true; cancelAnimationFrame(raf); };
+      let n = 3;
+      msg('<b class="count">3</b>', 'count');
+      const tick = setInterval(() => {
+        n--;
+        if (session !== s || !s.active) { clearInterval(tick); return; }
+        if (n > 0) msg(`<b class="count">${n}</b>`, 'count');
+        else { clearInterval(tick); msg('Los!', 'count'); newRound(); raf = requestAnimationFrame(frame); }
       }, 650);
     },
   },
@@ -786,6 +964,61 @@ $('#btn-reset').onclick = (e) => {
 
 // ---------- Çalışmalarım (yalnızca okul hesabıyla girişte) ----------
 const escH = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// ---------- Haftalık Sınıf Ligi ----------
+const MEDALS = ['🥇', '🥈', '🥉'];
+let leagueClass = '';
+async function renderLeague() {
+  const box = $('#league');
+  if (!box) return;
+  const O = window.Okul;
+  if (!O || O.demo || !O.user || !O.user.uid || O.user.uid === 'local') { box.hidden = true; return; }
+  const u = O.user;
+  const left = 7 - ((new Date().getDay() + 6) % 7); // Pazartesi=7 ... Pazar=1
+  const sub = $('#league-sub'), body = $('#league-body'), stars = $('#league-stars'), pick = $('#league-pick');
+  box.hidden = false;
+  try {
+    let sinif = '';
+    if (u.kind === 'ogrenci') {
+      const mine = await O.myClass();
+      if (!mine) {
+        sub.textContent = '';
+        body.innerHTML = '<p class="lg-empty">Ligde yer almak için öğretmeninin seni sınıf listesine eklemesi gerekiyor.</p>';
+        stars.innerHTML = ''; pick.hidden = true;
+        return;
+      }
+      sinif = mine.sinif; pick.hidden = true;
+    } else {
+      // Öğretmen: bu hafta ligde puanı olan sınıflardan birini seçer (öğretmen ligde yarışmaz)
+      const classes = await O.leagueClasses();
+      if (!classes.length) {
+        sub.textContent = 'Öğretmen görünümü';
+        body.innerHTML = '<p class="lg-empty">Bu hafta henüz hiçbir sınıf puan toplamadı. Öğrenciler oyun bitirdikçe lig dolacak.</p>';
+        stars.innerHTML = ''; pick.hidden = true;
+        return;
+      }
+      if (!classes.some((c) => c.sinif === leagueClass)) leagueClass = classes[0].sinif;
+      sinif = leagueClass;
+      pick.hidden = false;
+      pick.innerHTML = classes.map((c) => `<option value="${escH(c.sinif)}"${c.sinif === sinif ? ' selected' : ''}>${escH(c.sinif)} · ${c.n} öğrenci · ${c.xp} XP</option>`).join('');
+      pick.onchange = () => { leagueClass = pick.value; renderLeague(); };
+    }
+    const [rows, prev] = await Promise.all([O.leagueTable(sinif), O.leagueTable(sinif, O.lastWeekId())]);
+    sub.innerHTML = `<b>${escH(sinif)}</b> · ${left === 1 ? 'bugün bitiyor' : `bitmesine ${left} gün`} · Pazartesi sıfırlanır`;
+    const meIdx = rows.findIndex((r) => r.uid === u.uid);
+    const show = rows.slice(0, 10);
+    if (meIdx >= 10) show.push(rows[meIdx]);
+    body.innerHTML = rows.length ? `<ol class="lg-list">${show.map((r) => {
+      const i = rows.indexOf(r);
+      return `<li class="${r.uid === u.uid ? 'me' : ''}${i < 3 ? ' top' : ''}" style="--i:${i}"><span class="lg-rank">${i < 3 ? MEDALS[i] : i + 1}</span><span class="lg-name">${escH(r.ad)}${r.uid === u.uid ? ' <em>sen</em>' : ''}</span><b>${r.xp} XP</b></li>`;
+    }).join('')}</ol>` : '<p class="lg-empty">Bu hafta sınıfında henüz kimse puan toplamadı. Bir oyun bitir, ilk sen ol!</p>';
+    if (u.kind === 'ogrenci' && meIdx < 0 && rows.length) body.insertAdjacentHTML('beforeend', '<p class="lg-empty">Bir oyun bitirince sen de listeye girersin.</p>');
+    stars.innerHTML = prev.length ? `<h3>Geçen haftanın yıldızları</h3><div class="lg-stars">${prev.slice(0, 3).map((r, i) => `<span><i>${MEDALS[i]}</i>${escH(r.ad)}<small>${r.xp} XP</small></span>`).join('')}</div>` : '';
+  } catch (e) {
+    console.warn('Lig okunamadı', e);
+    body.innerHTML = '<p class="lg-empty">Lig şu an yüklenemedi. Biraz sonra yeniden dene.</p>';
+  }
+}
+
 async function renderMyWork() {
   const box = $('#my-work');
   if (!box || !window.Okul || Okul.demo || !Okul.user || Okul.user.uid === 'local' || Okul.user.kind !== 'ogrenci') return;
@@ -843,7 +1076,7 @@ renderHome();
 // dosyadan sonra çalışır; hazır olduğunda window.Okul tanımlanır.
 (function waitForOkul(tries = 0) {
   if (window.Okul) Okul.onReady((u, progress) => {
-    useProfile(u.uid, progress.almanca); renderMyWork();
+    useProfile(u.uid, progress.almanca); renderMyWork(); renderLeague();
     const card = $('#duel-card');
     if (card && !Okul.demo) {
       card.hidden = false;

@@ -44,14 +44,18 @@ python3 -m http.server 8000   # → http://localhost:8000
    varmadan doğru şeride (*der / die / das*) geç. Doğru bildikçe hızlanır; 3 can, kalkan,
    ekstra can, altın (x2) kelime ve toplanan puanlar var. Kontrol: alttaki düğmeler, şeride
    dokunma, yukarı/aşağı kaydırma ya da ↑ ↓ / 1 2 3 tuşları.
-1. **🎯 Artikel Avı** — 60 saniye. Kelime ve resmi çıkar, *der / die / das*
+1. **☄️ Kelime Avcısı** — uzay atari oyunu. Üstte Türkçe kelime yazar; yukarıdan düşen
+   meteorlarda Almancası (artikeliyle) var. Doğru meteoru vur, lazer onu patlatsın. Yanlışı
+   vurmak ya da doğruyu kaçırmak bir can götürür (3 can). Her 5 isabette seviye atlanır,
+   meteorlar hızlanır ve çoğalır.
+2. **🎯 Artikel Avı** — 60 saniye. Kelime ve resmi çıkar, *der / die / das*
    butonlarından birine bas. Üst üste doğrular kombo puanı verir (x2'ye kadar bonus).
-2. **🃏 Hafıza Kartları** — 6 çift kart. Almanca kelime kartını resim kartıyla eşleştir.
+3. **🃏 Hafıza Kartları** — 6 çift kart. Almanca kelime kartını resim kartıyla eşleştir.
    Az hamle = yüksek yıldız.
-3. **👂 Hör zu!** — 10 tur. Hoparlöre bas, Almanca kelimeyi dinle, 4 resimden doğrusunu seç.
-4. **🚂 Cümle Treni** — 6 cümle. Türkçe anlamı verilen cümlenin kelime vagonlarını
+4. **👂 Hör zu!** — 10 tur. Hoparlöre bas, Almanca kelimeyi dinle, 4 resimden doğrusunu seç.
+5. **🚂 Cümle Treni** — 6 cümle. Türkçe anlamı verilen cümlenin kelime vagonlarını
    trene sırayla tak. Doğruysa tren yola çıkar.
-5. **🚀 Fiil Roketi** — 10 tur. `Du ___ Fußball. (spielen)` → *spielst*. Doğruysa roket uçar.
+6. **🚀 Fiil Roketi** — 10 tur. `Du ___ Fußball. (spielen)` → *spielst*. Doğruysa roket uçar.
 
 **⚔️ Sınıf Düellosu** (yalnızca girişli `/v2/` sürümünde, `duello.html`) — Kahoot tarzı canlı
 yarışma. Yönetici listesindeki öğretmen tema, soru sayısı, süre ve soru türlerini (der/die/das,
@@ -72,9 +76,18 @@ Ev, Boş Zaman (veya hepsi karışık). Temalar MEB 2. yabancı dil Almanca A1
   0, 50, 200, 450, 800… XP (giderek zorlaşır).
 - **Yıldızlar:** %90+ ⭐⭐⭐, %70+ ⭐⭐, %40+ ⭐
 - **Günlük seri 🔥:** Her gün en az bir oyun oynayınca artar, bir gün atlanırsa sıfırlanır.
-- **Rozetler:** İlk Adım, Artikel Ninja (10'luk seri), Kusursuz, Kaşif (5 oyunun hepsi),
+- **Rozetler:** İlk Adım, Artikel Ninja (10'luk seri), Kusursuz, Kaşif (bütün oyunlar),
   Ateşli (3 gün seri), Deutsch-König (5. seviye).
-- İlerleme cihazda (`localStorage`) saklanır; hesap/sunucu gerekmez.
+- **Max'in Gardırobu:** Seviye atladıkça ve rozet kazandıkça Max'e eşya açılır (kep, Bavyera
+  şapkası, kral tacı, güneş gözlüğü, yuvarlak gözlük, atkılar, papyon; Ninja bandı "Artikel
+  Ninja" rozetiyle). Seçilen eşyalar ana sayfadaki Max'te görünür; yeni açılan eşya sonuç
+  ekranında duyurulur.
+- **Haftalık Sınıf Ligi** (yalnızca girişli `/v2/` sürümünde): Öğrencinin bu hafta oyunlardan
+  kazandığı XP, sınıf arkadaşlarıyla birlikte ana sayfada sıralanır (ad "Ali Y." biçiminde,
+  soyad kısaltılır). Lig her Pazartesi sıfırlanır; geçen haftanın ilk üçü "Geçen haftanın
+  yıldızları" olarak görünür. Sınıf, öğretmenin yüklediği sınıf listesinden gelir; listede
+  olmayan öğrenci lige girmez. Öğretmenler ligde yarışmaz, sınıf seçip tabloyu görebilir.
+- İlerleme cihazda (`localStorage`) saklanır; girişli sürümde ayrıca hesaba yazılır.
 
 ## 4. Görsel stil
 
@@ -208,7 +221,8 @@ yaptığı kelimeleri görür.
 | `users/{uid}` | ad, e-posta, öğrenci/öğretmen, ilk ve son giriş, uygulama ilerlemesi (XP, rozetler) | kişinin kendisi, yönetici |
 | `sessions/{id}` | uygulama, oyun, tema, başlangıç/bitiş, etkin süre (sekme arkadayken saat durur), doğru/yanlış sayısı, puan, tamamlandı mı, her cevap (soru, doğrusu, verilen, süre) | kişinin kendisi, yönetici |
 | `duels/{kod}` (+ `players`, `answers`, `secret`) | canlı düello: durum, oyuncu puanları, cevaplar, cevap anahtarı | öğrenci: kendi katılımı ve sıralama; cevap anahtarı ve cevaplar yalnızca düelloyu açan öğretmen |
-| `sinif_listesi/{e-posta}` | sınıf, ad soyad (öğretmenin yüklediği liste) | yönetici |
+| `sinif_listesi/{e-posta}` | sınıf, ad soyad (öğretmenin yüklediği liste) | yönetici; öğrenci yalnızca kendi kaydını |
+| `lig/{hafta}/oyuncular/{uid}` | Haftalık Sınıf Ligi: kısaltılmış ad, sınıf, haftalık XP (hafta: `2026-W40`) | okulun bütün hesapları |
 | `admins/{e-posta}` | yönetici listesi (yalnızca konsoldan düzenlenir) | — |
 
 ### Başka bir uygulamaya eklemek (ör. Nokta'nın Filmleri)
@@ -276,8 +290,9 @@ yedek olarak kullanılabilir: `python3 tools/generate_audio.py --engine piper --
 ## 8. Yol haritası (sonraki adımlar)
 
 - [x] Okul hesabıyla giriş, çalışma kaydı ve yönetici rapor paneli
-- [ ] **Sınıf ve şube** bilgisi (raporu sınıfa göre süzmek için)
-- [ ] **Sınıf modu:** Öğretmen bir kod paylaşır, öğrenciler aynı anda yarışır (canlı liderlik tablosu)
+- [x] **Sınıf ve şube** bilgisi (öğretmenin yüklediği sınıf listesi)
+- [x] **Sınıf Düellosu:** Öğretmen bir kod paylaşır, öğrenciler aynı anda yarışır
+- [x] Kelime Avcısı, Max'in Gardırobu ve Haftalık Sınıf Ligi
 - [ ] **Aralıklı tekrar (spaced repetition):** Yanlış yapılan kelimeler daha sık sorulsun
 - [ ] **Konuşma oyunu:** Mikrofonla kelimeyi söyle, konuşma tanıma ile kontrol et
 - [ ] **Çoğul hali (Plural)** ve **akkusativ** (einen/eine/ein) mini oyunları

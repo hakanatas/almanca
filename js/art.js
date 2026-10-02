@@ -17,9 +17,28 @@ const INK_DEFS = `
   </defs>
 </svg>`;
 
+// Max'in Gardırobu: seçilen aksesuarlar (window.MAX_OUTFIT = { hat, eyes, neck }) başa çizilir
+const ACCESSORIES = {
+  kep:      { slot: 'hat',  name: 'Kep',               level: 2, svg: `<path class="acc" style="--c:var(--der)" d="M168 35 C166 19 200 12 207 31 Z"/><path class="acc" style="--c:var(--der)" d="M201 31 Q216 28 227 34 Q214 39 201 36 Z"/><circle class="acc" style="--c:var(--paper)" cx="186" cy="18" r="2.5"/>` },
+  tiroler:  { slot: 'hat',  name: 'Bavyera şapkası',   level: 4, svg: `<ellipse class="acc" style="--c:var(--das)" cx="188" cy="31" rx="26" ry="5.5"/><path class="acc" style="--c:var(--das)" d="M172 31 C172 14 202 11 205 30 Z"/><path class="acc-line" style="--c:var(--die)" d="M173 26 Q188 22 204 25"/><path class="acc" style="--c:var(--amber)" d="M200 24 C206 10 214 4 216 2 C212 12 208 20 203 26 Z"/>` },
+  tac:      { slot: 'hat',  name: 'Kral tacı',         level: 6, svg: `<path class="acc" style="--c:var(--amber)" d="M171 33 L174 12 L182 23 L189 8 L196 23 L204 12 L206 33 Z"/><circle class="acc" style="--c:var(--die)" cx="189" cy="27" r="2.6"/><circle class="acc" style="--c:var(--der)" cx="179" cy="28" r="2"/><circle class="acc" style="--c:var(--das)" cx="199" cy="28" r="2"/>` },
+  ninja:    { slot: 'hat',  name: 'Ninja bandı',       badge: 'kombo10', svg: `<path class="acc-line" style="--c:var(--die);stroke-width:7" d="M161 41 Q186 31 210 37"/><path class="acc-line" style="--c:var(--die);stroke-width:5" d="M163 41 Q152 46 146 54 M163 41 Q150 40 143 44"/>` },
+  gunes:    { slot: 'eyes', name: 'Güneş gözlüğü',     level: 3, svg: `<path class="acc-line" d="M185 46 L166 43"/><path class="acc" style="--c:var(--ink)" d="M184 45 H206 Q206 58 195 58 Q184 58 184 45 Z"/><path class="acc-line" style="--c:var(--paper);stroke-width:1.6" d="M189 48 L193 48"/>` },
+  yuvarlak: { slot: 'eyes', name: 'Yuvarlak gözlük',   level: 5, svg: `<path class="acc-line" d="M187 48 L167 44"/><circle class="acc-ring" cx="195" cy="50" r="8"/>` },
+  atki:     { slot: 'neck', name: 'Kırmızı atkı',      level: 2, svg: `<path class="acc-line" style="--c:var(--die);stroke-width:10" d="M156 81 Q172 99 197 89"/><path class="acc" style="--c:var(--die)" d="M166 90 L160 110 L170 112 L174 93 Z"/>` },
+  papyon:   { slot: 'neck', name: 'Papyon',            level: 4, svg: `<path class="acc" style="--c:var(--seal)" d="M176 96 L164 89 L164 103 Z M176 96 L188 89 L188 103 Z"/><circle class="acc" style="--c:var(--seal)" cx="176" cy="96" r="3"/>` },
+  bayrak:   { slot: 'neck', name: 'Almanya atkısı',    level: 5, svg: `<path class="acc-line" style="--c:var(--ink);stroke-width:12" d="M156 81 Q172 99 197 89"/><path class="acc-line" style="--c:var(--die);stroke-width:7" d="M156 81 Q172 99 197 89"/><path class="acc-line" style="--c:var(--amber);stroke-width:2.6" d="M156 81 Q172 99 197 89"/>` },
+};
+function outfitLayers(slot) {
+  const o = (typeof window !== 'undefined' && window.MAX_OUTFIT) || {};
+  const a = ACCESSORIES[o[slot]];
+  return a && a.slot === slot ? `<g class="acc-${slot}">${a.svg}</g>` : '';
+}
+
 function maxSVG(extraClass = '') {
+  const neck = outfitLayers('neck');
   return `
-<svg class="max ${extraClass}" viewBox="0 0 240 160" aria-hidden="true">
+<svg class="max ${extraClass}${neck ? ' has-neck' : ''}" viewBox="0 0 240 160" aria-hidden="true">
   <g class="mx-ground">
     <path d="M6 146 C60 143 120 148 178 145 S226 146 236 145" fill="none" stroke-width="1.6" stroke-linecap="round"/>
     <circle cx="40" cy="150" r="1.4"/><circle cx="70" cy="152" r="1"/><circle cx="150" cy="151" r="1.5"/><circle cx="196" cy="150" r="1"/><circle cx="214" cy="152" r="1.3"/>
@@ -52,6 +71,7 @@ function maxSVG(extraClass = '') {
         <path class="mx-cheek" d="M200 64 q4 2 8 0"/>
         <g class="mx-ear"><path class="mx-earfill" d="M172 34 C158 34 152 50 155 70 C157 81 168 82 170 72 C172 58 176 46 172 34Z"/></g>
         <path class="mx-hair" d="M184 29 q-2 -8 3 -12 M189 29 q1 -7 6 -9"/>
+        ${neck}${outfitLayers('eyes')}${outfitLayers('hat')}
       </g>
     </g>
   </g>
@@ -60,6 +80,18 @@ function maxSVG(extraClass = '') {
 
 // Mürekkep çizimi oyun ikonları: siyah kontür, kehribar vurgu.
 const ICONS = {
+  run: `<svg viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M4 42 L16 8 M24 42 V8 M44 42 L32 8" class="i-line" stroke-width="2" stroke-dasharray="4 4"/>
+    <rect x="15" y="13" width="18" height="11" rx="2" class="i-soft"/>
+    <circle cx="24" cy="34" r="7" class="i-main"/>
+    <path d="M9 30 h-6 M10 36 h-7" class="i-line" stroke-width="2.4"/></svg>`,
+  hunt: `<svg viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M44 4 L27 19" class="i-line" stroke-width="5" stroke-linecap="round" opacity=".35"/>
+    <circle cx="21" cy="24" r="10" class="i-soft"/>
+    <circle cx="18" cy="21" r="2.6" class="i-paper"/><circle cx="24" cy="28" r="1.8" class="i-paper"/>
+    <path d="M10 46 L21 26" class="i-line" stroke-width="2.4"/>
+    <path d="M6 40 L10 46 L14 40 Z" class="i-ink"/>
+    <path d="M38 30 l2 4 4 .5-3 3 .8 4-3.8-2-3.8 2 .8-4-3-3 4-.5Z" class="i-main"/></svg>`,
   artikel: `<svg viewBox="0 0 48 48" aria-hidden="true">
     <circle cx="22" cy="26" r="17" class="i-soft"/><circle cx="22" cy="26" r="10.5" class="i-main"/><circle cx="22" cy="26" r="4" class="i-ink"/>
     <path d="M22 26 L40 8" class="i-line" stroke-width="2.6"/>

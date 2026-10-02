@@ -9,7 +9,7 @@ const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const APPS = {
   almanca: {
     name: 'Deutsch Macerası',
-    games: { run: 'Artikel Koşusu', duello: 'Sınıf Düellosu', artikel: 'Artikel Avı', memory: 'Hafıza Kartları', listen: 'Hör zu!', satz: 'Cümle Treni', verb: 'Fiil Roketi' },
+    games: { run: 'Artikel Koşusu', hunt: 'Kelime Avcısı', duello: 'Sınıf Düellosu', artikel: 'Artikel Avı', memory: 'Hafıza Kartları', listen: 'Hör zu!', satz: 'Cümle Treni', verb: 'Fiil Roketi' },
     badges: { ilk: 'İlk Adım', kombo10: 'Artikel Ninja', mukemmel: 'Kusursuz', kasif: 'Kaşif', seri3: 'Ateşli', seviye5: 'Deutsch-König' },
   },
 };
