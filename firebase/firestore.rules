@@ -31,6 +31,8 @@ service cloud.firestore {
     // Öğretmenin verdiği listeden rapor panelinde yüklenir; yalnızca yöneticiler okur ve yazar.
     match /sinif_listesi/{email} {
       allow read, delete: if isAdmin();
+      // Öğrenci kendi sınıfını okuyabilir (Haftalık Sınıf Ligi için); başkasınınkini göremez
+      allow get: if schoolUser() && request.auth.token.email.lower() == email;
       allow create, update: if isAdmin()
         && request.resource.data.keys().hasOnly(['sinif', 'ad', 'guncelleyen', 'guncelleme'])
         && request.resource.data.sinif is string
@@ -79,6 +81,32 @@ service cloud.firestore {
         allow read: if schoolUser() && duel(code).host == request.auth.uid;
         allow update, delete: if false;
       }
+    }
+
+    // Haftalık Sınıf Ligi: lig/{hafta}/oyuncular/{uid}, hafta ISO biçiminde (2026-W40).
+    // Öğrenci yalnızca kendi satırını yazar; sınıfı öğretmenin listesinden gelir (kendisi seçemez).
+    // Bir yazışta en fazla 500 XP eklenir ve iki yazış arasında en az 20 sn olmalıdır.
+    function stuUser() {
+      return schoolUser() && request.auth.token.email.lower().matches('^[^@]+@stu[.]alkev[.]k12[.]tr$');
+    }
+    function ligSatiri(hafta, uid) {
+      return stuUser() && uid == request.auth.uid
+        && hafta.matches('^20[0-9][0-9]-W[0-5][0-9]$')
+        && request.resource.data.keys().hasOnly(['ad', 'sinif', 'xp', 'guncelleme'])
+        && request.resource.data.ad is string && request.resource.data.ad.size() <= 40
+        && request.resource.data.sinif == get(/databases/$(database)/documents/sinif_listesi/$(request.auth.token.email.lower())).data.sinif
+        && request.resource.data.guncelleme == request.time
+        && request.resource.data.xp is int;
+    }
+    match /lig/{hafta}/oyuncular/{uid} {
+      allow read: if schoolUser();
+      allow create: if ligSatiri(hafta, uid)
+        && request.resource.data.xp > 0 && request.resource.data.xp <= 500;
+      allow update: if ligSatiri(hafta, uid)
+        && request.resource.data.xp > resource.data.xp
+        && request.resource.data.xp - resource.data.xp <= 500
+        && request.time > resource.data.guncelleme + duration.value(20, 's');
+      allow delete: if false;
     }
 
     // Profil + ilerleme (XP, rozetler). Herkes yalnızca kendi belgesini yazar.

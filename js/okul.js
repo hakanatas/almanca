@@ -142,6 +142,36 @@ async function onSignedIn(u) {
 // ---------- Kayıt ----------
 let progressTimer = null;
 const pendingProgress = {};
+let classPromise = null;
+const league = { hafta: '', pending: 0, last: 0, timer: null };
+const leagueLater = (ms) => { clearTimeout(league.timer); league.timer = setTimeout(() => leagueFlush().catch(() => {}), ms); };
+async function leagueFlush() {
+  const mine = await Okul.myClass();
+  if (!mine || league.pending <= 0) return false;
+  const wait = league.last + 21000 - Date.now();
+  if (wait > 0) { leagueLater(wait); return false; }
+  const add = Math.min(500, league.pending);
+  const ref = fb.doc(fb.db, 'lig', league.hafta, 'oyuncular', user.uid);
+  league.last = Date.now();
+  try {
+    await fb.setDoc(ref, { ad: shortName(mine.ad || user.name || user.email), sinif: mine.sinif, xp: fb.increment(add), guncelleme: fb.serverTimestamp() }, { merge: true });
+    league.pending -= add;
+    if (league.pending > 0) leagueLater(21000);
+    return true;
+  } catch (e) {
+    // Büyük olasılıkla 20 sn sınırı (başka cihazdan da yazılmış olabilir): biraz sonra yeniden dene
+    console.warn('Lig puanı yazılamadı, yeniden denenecek', e);
+    leagueLater(21000);
+    return false;
+  }
+}
+// "Ali Rıza Yılmaz" → "Ali Rıza Y." (ligde tam soyad görünmez)
+const shortName = (full) => {
+  const parts = String(full).split('@')[0].trim().split(/\s+/);
+  if (parts.length < 2) return clip(parts[0], 40);
+  const last = parts.pop();
+  return clip(`${parts.join(' ')} ${last[0].toLocaleUpperCase('tr')}.`, 40);
+};
 
 const Okul = {
   ready: false,
@@ -218,6 +248,56 @@ const Okul = {
       const patch = { email: user.email, progress: { ...pendingProgress } };
       fb.setDoc(ref, patch, { merge: true }).catch((e) => console.warn('İlerleme kaydedilemedi', e));
     }, 2000);
+  },
+
+  // ---------- Haftalık Sınıf Ligi ----------
+  // lig/{hafta}/oyuncular/{uid} = { ad: "Ali Y.", sinif, xp, guncelleme }. Sınıf, öğretmenin yüklediği listeden okunur.
+  weekId(d = new Date()) {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const day = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - day); // ISO: haftanın perşembesi yılı belirler
+    const y = t.getUTCFullYear();
+    const w = Math.ceil(((t - Date.UTC(y, 0, 1)) / 86400000 + 1) / 7);
+    return `${y}-W${String(w).padStart(2, '0')}`;
+  },
+  lastWeekId() { return Okul.weekId(new Date(Date.now() - 7 * 86400000)); },
+
+  // Öğrencinin listedeki sınıfı ve adı (yoksa null)
+  myClass() {
+    if (DEMO || !user || user.kind !== 'ogrenci') return Promise.resolve(null);
+    if (!classPromise) {
+      classPromise = fb.getDoc(fb.doc(fb.db, 'sinif_listesi', user.email))
+        .then((d) => (d.exists() ? { sinif: d.data().sinif, ad: d.data().ad || '' } : null))
+        .catch(() => null);
+    }
+    return classPromise;
+  },
+
+  // Oyun bitince kazanılan XP'yi bu haftanın lig satırına ekler.
+  // Kural tek yazışta 500 XP ve iki yazış arasında 20 sn sınırı koyar; fazlası sonraki yazışa kalır.
+  async leagueAdd(xp) {
+    xp = Math.max(0, Math.round(Number(xp) || 0));
+    if (!xp || DEMO || !user || user.kind !== 'ogrenci') return false;
+    const hafta = Okul.weekId();
+    if (league.hafta !== hafta) Object.assign(league, { hafta, pending: 0 });
+    league.pending += xp;
+    return leagueFlush();
+  },
+
+  // Bir sınıfın o haftaki sıralaması (çoktan aza)
+  async leagueTable(sinif, hafta = Okul.weekId()) {
+    if (DEMO || !user || !fb || !sinif) return [];
+    const snap = await fb.getDocs(fb.query(fb.collection(fb.db, 'lig', hafta, 'oyuncular'), fb.where('sinif', '==', sinif)));
+    return snap.docs.map((d) => ({ uid: d.id, ...d.data() })).sort((a, b) => b.xp - a.xp);
+  },
+
+  // Haftanın bütün sınıfları (öğretmen görünümü için)
+  async leagueClasses(hafta = Okul.weekId()) {
+    if (DEMO || !user || !fb) return [];
+    const snap = await fb.getDocs(fb.collection(fb.db, 'lig', hafta, 'oyuncular'));
+    const by = {};
+    snap.docs.forEach((d) => { const x = d.data(); (by[x.sinif] = by[x.sinif] || { sinif: x.sinif, xp: 0, n: 0 }); by[x.sinif].xp += x.xp; by[x.sinif].n += 1; });
+    return Object.values(by).sort((a, b) => a.sinif.localeCompare(b.sinif, 'tr', { numeric: true }));
   },
 };
 window.Okul = Okul;
