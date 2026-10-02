@@ -78,7 +78,8 @@ index.html        Ekranlar (ana menü, oyun, sonuç)
 css/style.css     Görünüm, animasyonlar, karanlık mod
 js/data.js        TÜM İÇERİK: temalar, kelimeler, cümleler, fiiller, artikel kuralları
 js/okul.js        Okul hesabıyla giriş + çalışma kaydı (bütün uygulamalar için ortak)
-js/firebase-config.js  Firebase proje ayarları
+js/firebase-config.js  Kök sürümün Firebase ayarları (boş kalır → girişsiz)
+v2/               Girişli sürüm: v2/firebase-config.js + üretilen v2/index.html, v2/admin.html
 js/admin.js       Yönetici rapor paneli (admin.html)
 firebase/         Firestore güvenlik kuralları ve indeksler
 js/art.js         Maskot Max ve ikonların SVG çizimleri
@@ -106,7 +107,19 @@ Yeni tema için `THEMES` dizisine aynı yapıda yeni bir nesne eklenir; menüde 
 
 Oyuna yalnızca **@alkev.k12.tr** ve **@stu.alkev.k12.tr** Google hesaplarıyla girilir.
 Her oyun oturumu (hangi oyun, ne kadar süre, hangi soruya ne cevap verildi) kaydedilir;
-yönetici `admin.html` sayfasında hepsini tek yerde görür ve CSV olarak indirir.
+yönetici `v2/admin.html` sayfasında hepsini tek yerde görür ve CSV olarak indirir.
+
+**İki adres:**
+
+| Adres | Ne |
+|---|---|
+| `https://hakanatas.github.io/almanca/` | Girişsiz sürüm (herkese açık, kayıt tutulmaz). `js/firebase-config.js` boş kalır. |
+| `https://hakanatas.github.io/almanca/v2/` | Okul hesabıyla giriş + çalışma kaydı. Ayarları `v2/firebase-config.js`. |
+| `https://hakanatas.github.io/almanca/v2/admin.html` | Yönetici rapor paneli. |
+
+İki sürüm aynı `css/`, `js/`, `audio/` dosyalarını kullanır; oyunda yapılan her değişiklik ikisine de yansır.
+`v2/index.html` ve `v2/admin.html` kökteki sayfalardan üretilir (yalnızca `<base href="../">` ve ayar dosyası farklı).
+Kökteki `index.html` ya da `admin.html` değişince: `python3 tools/build_v2.py`
 Altyapı Firebase'dir (Google girişi + Firestore veritabanı), ücretsiz katman bir okul için yeterlidir.
 
 **Güvenlik nasıl sağlanıyor?** Alan adı kontrolü yalnızca tarayıcıda değil, sunucudaki
@@ -115,7 +128,7 @@ hiçbir veriyi okuyamaz, yazamaz. Öğrenci yalnızca kendi kayıtlarını gör�
 sonradan değiştirilemez, toplu raporu yalnızca yönetici okur. Kurallar Firestore emülatöründe
 28 senaryoyla test edildi (sahte alan adları, başkası adına kayıt, yetkisiz öğretmen vb.).
 
-`js/firebase-config.js` boşken oyun **deneme modunda** girişsiz çalışır ve hiçbir veri göndermez.
+Ayar dosyası boşken oyun **deneme modunda** girişsiz çalışır ve hiçbir veri göndermez.
 
 ### Kurulum (bir kez, yaklaşık 15 dakika)
 
@@ -134,11 +147,11 @@ sonradan değiştirilemez, toplu raporu yalnızca yönetici okur. Kurallar Fires
    bir alan ekleyin (ör. `not` = `yönetici`). Başka yönetici eklemek için aynı koleksiyona
    yeni belge eklemeniz yeterli.
 7. **Web uygulaması:** *Proje ayarları (⚙) → Genel → Uygulamalarınız → Web (</>)* → takma ad
-   verip kaydedin. Gösterilen `firebaseConfig` değerlerini `js/firebase-config.js`
+   verip kaydedin. Gösterilen `firebaseConfig` değerlerini **`v2/firebase-config.js`**
    içine yapıştırın. (Bu değerler gizli değildir.)
 8. **Yayın:** GitHub'da depo → *Settings → Pages → Deploy from a branch → main / (root)*.
-   Oyun `https://hakanatas.github.io/almanca/`, rapor paneli
-   `https://hakanatas.github.io/almanca/admin.html` adresinde açılır.
+   Girişli oyun `https://hakanatas.github.io/almanca/v2/`, rapor paneli
+   `https://hakanatas.github.io/almanca/v2/admin.html` adresinde açılır; kök adres girişsiz kalır.
 
 > **Öğrenciler "Bu uygulama engellendi" görürse:** Google Workspace for Education, 18 yaş
 > altı kullanıcıların tanımadığı uygulamalara Google ile girmesini varsayılan olarak engeller.
@@ -182,8 +195,8 @@ Aynı Firebase projesi bütün uygulamalara yeter; raporlar tek panelde birleşi
 ```bash
 npm i -g firebase-tools
 firebase emulators:start --only auth,firestore --project demo-almanca
-# js/firebase-config.js'e projectId: 'demo-almanca', apiKey: 'demo' yazıp
-# http://localhost:8000/index.html?emulator=1 adresini açın
+# v2/firebase-config.js'e projectId: 'demo-almanca', apiKey: 'demo' yazıp
+# http://localhost:8000/v2/?emulator=1 adresini açın
 ```
 
 ## 7. Seslendirme
