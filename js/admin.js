@@ -55,7 +55,8 @@ async function load() {
   const [snap, usnap, rsnap] = await Promise.all([
     fb.getDocs(q), fb.getDocs(fb.collection(fb.db, 'users')), fb.getDocs(fb.collection(fb.db, 'sinif_listesi')),
   ]);
-  ALL = snap.docs.map((d) => {
+  // Öğretmen hesaplarının (eski) oturumları rapora alınmaz
+  ALL = snap.docs.filter((d) => d.data().kind === 'ogrenci').map((d) => {
     const x = d.data();
     return { id: d.id, ...x, email: low(x.email), endedAt: toDate(x.endedAt) || toDate(x.startedAt), startedAt: toDate(x.startedAt) };
   });
@@ -88,7 +89,7 @@ function fillSelects() {
 
 // Kişi filtreleri (sınıf, kim, arama) hem oturumlara hem öğrenci satırlarına aynı şekilde uygulanır
 function personMatches(email, kind, name) {
-  const cls = $('#f-sinif').value, k = $('#f-kind').value, q = low($('#f-q').value);
+  const cls = $('#f-sinif').value, k = 'ogrenci', q = low($('#f-q').value);   // rapor yalnızca öğrencileri gösterir
   const c = classOf(email);
   if (cls === NO_CLASS ? c : cls && c !== cls) return false;
   if (k && kind !== k) return false;
@@ -509,7 +510,7 @@ $('#csv-sessions').onclick = () => {
 };
 
 // ---------- Başlat ----------
-['#f-app', '#f-game', '#f-kind', '#f-sinif'].forEach((id) => $(id).addEventListener('change', () => { if (id === '#f-app') fillSelects(); render(); }));
+['#f-app', '#f-game', '#f-sinif'].forEach((id) => $(id).addEventListener('change', () => { if (id === '#f-app') fillSelects(); render(); }));
 $('#f-q').addEventListener('input', () => render());
 $('#f-range').addEventListener('change', () => load().catch(showError));
 $('#f-refresh').addEventListener('click', () => load().catch(showError));

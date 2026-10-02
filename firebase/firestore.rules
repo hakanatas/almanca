@@ -94,7 +94,9 @@ service cloud.firestore {
 
     // Oyun oturumları: bir kez yazılır, sonradan değiştirilemez.
     match /sessions/{id} {
+      // Yalnızca öğrenci hesapları (@stu.alkev.k12.tr) oturum kaydeder; öğretmen denemeleri rapora girmez
       allow create: if schoolUser()
+        && request.auth.token.email.lower().matches('^[^@]+@stu[.]alkev[.]k12[.]tr$')
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email.lower()
         && request.resource.data.app is string && request.resource.data.app.size() <= 40

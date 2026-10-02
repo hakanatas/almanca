@@ -788,7 +788,7 @@ $('#btn-reset').onclick = (e) => {
 const escH = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 async function renderMyWork() {
   const box = $('#my-work');
-  if (!box || !window.Okul || Okul.demo || !Okul.user || Okul.user.uid === 'local') return;
+  if (!box || !window.Okul || Okul.demo || !Okul.user || Okul.user.uid === 'local' || Okul.user.kind !== 'ogrenci') return;
   let list;
   try { list = await Okul.mySessions('almanca', 40); } catch (e) { console.warn('Çalışmalar okunamadı', e); return; }
   box.hidden = false;

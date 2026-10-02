@@ -60,6 +60,7 @@ function renderWho() {
   w.innerHTML = `
     ${user.photo ? `<img src="${user.photo}" alt="" referrerpolicy="no-referrer">` : ''}
     <span class="okul-name">${user.name || user.email}<small>${user.email}</small></span>
+    ${user.kind === 'ogretmen' ? '<span class="okul-demo" title="Öğretmen hesabıyla oynanan oyunlar rapora yazılmaz">Öğretmen · denemeler rapora yazılmaz</span>' : ''}
     ${user.admin ? `<a class="okul-admin" href="${window.OKUL_ADMIN_URL || 'admin.html'}">Rapor paneli</a>` : ''}
     <button type="button" class="okul-out">Çıkış</button>`;
   w.querySelector('.okul-out').onclick = () => fb.signOut(fb.auth);
@@ -171,7 +172,8 @@ const Okul = {
   endSession(summary = {}) {
     const s = session;
     session = null;
-    if (!s || DEMO || !user) return Promise.resolve();
+    // Öğretmenler oyunları deneyebilir ama oturumları rapora yazılmaz (kural da yalnızca öğrenci kaydını kabul eder)
+    if (!s || DEMO || !user || user.kind !== 'ogrenci') return Promise.resolve();
     const durationSec = Math.min(activeSeconds(s), 14400);
     const total = s.items.length;
     const correct = s.items.filter((i) => i.ok).length;

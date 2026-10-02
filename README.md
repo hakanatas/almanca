@@ -139,7 +139,7 @@ Altyapı Firebase'dir (Google girişi + Firestore veritabanı), ücretsiz katman
 `firebase/firestore.rules` kurallarında da yapılır: başka bir Google hesabıyla giren kişi
 hiçbir veriyi okuyamaz, yazamaz. Öğrenci yalnızca kendi kayıtlarını görür, kayıtlar
 sonradan değiştirilemez, toplu raporu yalnızca yönetici okur. Kurallar Firestore emülatöründe
-60 senaryoyla test edildi (sahte alan adları, başkası adına kayıt, yetkisiz öğretmen vb.).
+63 senaryoyla test edildi (sahte alan adları, başkası adına kayıt, yetkisiz öğretmen vb.).
 
 Ayar dosyası boşken oyun **deneme modunda** girişsiz çalışır ve hiçbir veri göndermez.
 
@@ -174,6 +174,13 @@ Ayar dosyası boşken oyun **deneme modunda** girişsiz çalışır ve hiçbir v
 
 > **Kişisel veriler:** Kaydedilen bilgiler ad, okul e-postası ve oyun sonuçlarıdır. Öğrencileri
 > ve velileri bilgilendirmeniz (KVKK aydınlatma) önerilir.
+
+### Öğretmen hesapları
+
+Öğretmenler (@alkev.k12.tr) bütün oyunları ve düelloyu deneyebilir; oynadıkları **rapora yazılmaz**.
+Bu hem oyunda (öğretmen oturumu gönderilmez, üst çubukta "Öğretmen · denemeler rapora yazılmaz"
+notu görünür) hem de Firestore kuralında (oturum kaydını yalnızca @stu.alkev.k12.tr hesapları yazabilir)
+uygulanır. Rapor paneli yalnızca öğrencileri gösterir. Öğretmenin XP ve rozetleri kendi hesabında tutulur.
 
 ### Sınıf listesi ve öğretmen raporu
 
