@@ -1,0 +1,204 @@
+<title>Ses Karşılaştırması</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Kâğıt üstüne mürekkep: Deutsch Macerası ile aynı dünya. Bilinçli tek (açık) tema.
+   Her satır bir kelime/cümle; A, B, C düğmeleri dinletir, altındaki seçim oy olarak kaydedilir. */
+:root {
+  color-scheme: light;
+  --paper: #f1eadc; --paper-2: #e9dfcb; --paper-hi: rgba(255, 252, 244, .66);
+  --ink: #171411; --ink-soft: rgba(23, 20, 17, .68); --ink-faint: rgba(23, 20, 17, .16);
+  --amber: #e8a33d; --amber-deep: #9a5f12; --amber-wash: rgba(232, 163, 61, .2); --seal: #c4432b; --ok: #3f6b2e;
+  --brush: 'Caveat Brush', 'Comic Sans MS', cursive; --serif: 'Fraunces', Georgia, serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--serif); font-size: 17px; line-height: 1.5;
+  background-image: radial-gradient(ellipse at 18% 8%, rgba(255, 252, 244, .8), transparent 55%), radial-gradient(ellipse at 90% 70%, rgba(214, 196, 164, .35), transparent 60%); }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 32px 64px; }
+.kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--amber-deep); display: flex; align-items: center; gap: 10px; }
+.seal { width: 26px; height: 28px; display: grid; place-items: center; background: var(--seal); color: var(--paper); font-family: var(--serif); font-size: 16px; letter-spacing: 0; border-radius: 6px 8px 5px 9px; transform: rotate(-4deg); }
+h1 { margin: 12px 0 10px; font-weight: 400; font-size: clamp(40px, 9vw, 64px); line-height: 1; letter-spacing: -.02em; text-wrap: balance; }
+h2 { font-family: var(--brush); font-weight: 400; font-size: clamp(30px, 7vw, 40px); line-height: 1; margin: 40px 0 8px; }
+.lede { margin: 0; color: var(--ink-soft); max-width: 40em; }
+.lede b { color: var(--ink); font-weight: 600; }
+.steps { margin: 16px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 15.5px; color: var(--ink-soft); }
+.steps li { display: flex; gap: 10px; align-items: baseline; }
+.steps i { font-style: normal; font-family: var(--mono); font-size: 12px; color: var(--amber-deep); background: var(--amber-wash); padding: 1px 7px; border-radius: 4px; flex: none; }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; margin-top: 22px; padding: 10px 14px; border-radius: 10px;
+  background: var(--ink); color: var(--paper); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; font-family: var(--mono); font-size: 13px; }
+#counts { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.bar b { font-family: var(--brush); font-weight: 400; font-size: 26px; line-height: 1; color: var(--amber); margin-left: 4px; }
+.bar .save { margin-left: auto; color: rgba(241, 234, 220, .75); }
+
+.list { margin-top: 18px; display: grid; gap: 10px; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 14px 16px; border-radius: 10px; background: var(--paper-hi); box-shadow: 0 0 0 1px rgba(23, 20, 17, .08); }
+.row.done { box-shadow: 0 0 0 1px rgba(23, 20, 17, .08), inset 4px 0 0 var(--amber); }
+.text { font-family: var(--brush); font-size: 30px; line-height: 1.05; overflow-wrap: anywhere; min-width: 0; }
+.text small { display: block; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); letter-spacing: .06em; margin-top: 4px; }
+.plays { display: flex; flex-wrap: wrap; gap: 8px; }
+.play { width: 48px; height: 44px; border-radius: 10px 12px 9px 11px; border: 2px solid var(--ink); background: var(--paper); font-family: var(--mono); font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.play::before { content: ''; border-left: 9px solid var(--amber-deep); border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+.play.on { background: var(--ink); color: var(--paper); }
+.play.on::before { border-left-color: var(--amber); }
+.pick { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pick span { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); margin-right: 2px; }
+.opt { padding: 6px 12px; border-radius: 999px; border: 1.5px solid var(--ink); font-family: var(--mono); font-size: 13px; }
+.opt[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.opt.none[aria-pressed="true"] { background: var(--seal); border-color: var(--seal); }
+.note { flex: 1 1 180px; min-width: 0; font-family: var(--serif); font-size: 15px; padding: 6px 10px; border: 1.5px solid var(--ink-faint); border-radius: 8px; background: transparent; color: var(--ink); }
+.offline { margin-top: 14px; padding: 10px 14px; border-left: 4px solid var(--seal); background: var(--paper-hi); border-radius: 6px; font-size: 15px; }
+
+.reveal { margin-top: 10px; }
+.reveal summary { cursor: pointer; font-family: var(--mono); font-size: 13px; padding: 10px 14px; border: 2px solid var(--ink); border-radius: 8px; display: inline-block; list-style: none; }
+.reveal summary::-webkit-details-marker { display: none; }
+.who { display: grid; gap: 10px; margin-top: 16px; }
+.who div { padding: 12px 14px; border-radius: 10px; background: var(--paper-hi); box-shadow: 0 0 0 1px rgba(23, 20, 17, .08); }
+.who b { font-family: var(--brush); font-weight: 400; font-size: 26px; }
+.who p { margin: 2px 0 0; font-size: 15px; color: var(--ink-soft); }
+.tbl { overflow-x: auto; margin-top: 14px; border-radius: 10px; background: var(--paper-hi); box-shadow: 0 0 0 1px rgba(23, 20, 17, .08); }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--ink-faint); vertical-align: top; }
+th { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+td.y { color: var(--ok); } td.n { color: var(--seal); }
+.voice { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+@media (max-width: 560px) {
+  .row { grid-template-columns: 1fr; }
+  .plays { justify-content: flex-start; }
+  .bar .save { margin-left: 0; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap" lang="tr">
+  <div class="kicker"><span class="seal">D</span>Deutsch Macerası · ses testi</div>
+  <h1>Hangi ses daha iyi?</h1>
+  <p class="lede"><span id="n-items">26</span> zor kelime ve cümle, <span id="n-eng">üç</span> farklı sesle. Sesler bilerek harflerle adsız; hangisinin hangi motor olduğu en altta. Seçimleriniz otomatik kaydedilir, sonra ben okuyup karar önerisi çıkarırım.</p>
+  <ol class="steps">
+    <li><i>1</i>Her satırdaki bütün sesleri dinleyin. Son harf bu cihazın kendi tarayıcı sesidir; telefonda ve bilgisayarda farklı duyulabilir.</li>
+    <li><i>2</i>En doğal ve en doğru telaffuz edeni seçin. Hiçbiri olmuyorsa "Hiçbiri".</li>
+    <li><i>3</i>İsterseniz kısa not yazın: "ü yanlış", "robotik", "çok hızlı" gibi.</li>
+  </ol>
+
+  <div class="bar" aria-live="polite">
+    <span id="counts"></span>
+    <span class="save" id="save"></span>
+  </div>
+  <div id="offline" class="offline" hidden>Oylar kaydedilemiyor: bu görünümde veritabanı yok. Sesleri yine dinleyebilir, seçimlerinizi bana sohbette yazabilirsiniz.</div>
+
+  <div class="list" id="list"></div>
+
+  <h2>Sesler kim?</h2>
+  <details class="reveal">
+    <summary>Oy verdikten sonra açın</summary>
+    <div class="who" id="who"></div>
+    <p class="lede" style="margin-top:16px">Otomatik denetim: Whisper (konuşma tanıma) her kaydı dinledi; birebir doğru duyduysa ✓. Tek kelimelik kayıtlarda Whisper'ın kendisi de yanılabilir, bu yüzden kulağınız esas.</p>
+    <div class="tbl"><table><thead id="asr-head"></thead><tbody id="asr"></tbody></table></div>
+  </details>
+</div>
+
+<script>
+// { collection, engines: [{key, label, desc}], items: [{text, clips: {key: dataURL}, asr: {key: [ok, heard]}}] }
+const CFG = /*DATA*/;
+const DATA = CFG.items;
+const $ = (s) => document.querySelector(s);
+const votes = {};
+let db = null;
+// Kayıtlı sesler + en sonda tarayıcı sesi; harfler sırayla
+const ENG = [...CFG.engines, { key: 'browser', label: 'Tarayıcı sesi', desc: 'Cihazınızın kendi Almanca sesi, kayıt yok. Bu cihazda kullanılan: <span class="voice" id="voice-name">–</span>' }]
+  .map((e, i) => ({ ...e, letter: String.fromCharCode(65 + i) }));
+const OPTS = [...ENG.map((e) => [e.key, e.letter]), ['x', 'Hiçbiri']];
+$('#n-items').textContent = DATA.length;
+$('#n-eng').textContent = ENG.length;
+
+let deVoice = null;
+function pickVoice() {
+  if (!('speechSynthesis' in window)) return;
+  const vs = speechSynthesis.getVoices().filter((v) => /^de(-|_|$)/i.test(v.lang));
+  const score = (v) => (/natural|neural|online|premium|enhanced|wavenet/i.test(v.name) ? 4 : 0) + (/google/i.test(v.name) ? 3 : 0)
+    + (/anna|katja|helena|petra|markus|yannick|conrad|amala/i.test(v.name) ? 2 : 0) + (v.lang === 'de-DE' ? 1 : 0) - (/espeak/i.test(v.name) ? 5 : 0);
+  deVoice = vs.sort((a, b) => score(b) - score(a))[0] || null;
+  const n = $('#voice-name'); if (n) n.textContent = deVoice ? `${deVoice.name} (${deVoice.lang})` : 'Almanca ses bulunamadı';
+}
+
+const audio = new Audio();
+let playingBtn = null;
+function setPlaying(btn) { if (playingBtn) playingBtn.classList.remove('on'); playingBtn = btn; if (btn) btn.classList.add('on'); }
+audio.onended = () => setPlaying(null);
+function play(i, key, btn) {
+  audio.pause(); if ('speechSynthesis' in window) speechSynthesis.cancel();
+  setPlaying(btn);
+  if (key === 'browser') {
+    if (!('speechSynthesis' in window)) { setPlaying(null); return; }
+    const u = new SpeechSynthesisUtterance(DATA[i].text);
+    u.lang = 'de-DE'; if (deVoice) u.voice = deVoice; u.rate = 0.9;
+    u.onend = () => setPlaying(null);
+    speechSynthesis.speak(u);
+    return;
+  }
+  audio.src = DATA[i].clips[key];
+  audio.play().catch(() => setPlaying(null));
+}
+
+function render() {
+  const list = $('#list');
+  list.innerHTML = '';
+  DATA.forEach((d, i) => {
+    const v = votes[i] || {};
+    const row = document.createElement('div');
+    row.className = 'row' + (v.choice ? ' done' : '');
+    row.innerHTML = `
+      <div class="text">${d.text}<small>${String(i + 1).padStart(2, '0')} / ${DATA.length}</small></div>
+      <div class="plays">${ENG.map((e) => `<button type="button" class="play" data-k="${e.key}" aria-label="${e.letter} sesini dinle">${e.letter}</button>`).join('')}</div>
+      <div class="pick"><span>En iyisi</span>${OPTS.map(([k, l]) => `<button type="button" class="opt ${k === 'x' ? 'none' : ''}" data-k="${k}" aria-pressed="${v.choice === k}">${l}</button>`).join('')}
+        <input class="note" id="note-${i}" type="text" placeholder="Not (isteğe bağlı)" value="${(v.note || '').replace(/"/g, '&quot;')}"></div>`;
+    row.querySelectorAll('.play').forEach((b) => (b.onclick = () => play(i, b.dataset.k, b)));
+    row.querySelectorAll('.opt').forEach((b) => (b.onclick = () => vote(i, { choice: b.dataset.k })));
+    const note = row.querySelector('.note');
+    note.onchange = () => vote(i, { note: note.value.trim().slice(0, 200) });
+    list.appendChild(row);
+  });
+  tally();
+}
+function tally() {
+  const c = Object.fromEntries(OPTS.map(([k]) => [k, 0]));
+  Object.values(votes).forEach((v) => { if (c[v.choice] != null) c[v.choice]++; });
+  $('#counts').innerHTML = OPTS.map(([k, l]) => `<span>${l} <b>${c[k]}</b></span>`).join('');
+  const n = Object.values(votes).filter((v) => v.choice).length;
+  $('#save').textContent = `${n} / ${DATA.length} oylandı`;
+}
+async function vote(i, patch) {
+  votes[i] = { ...(votes[i] || {}), ...patch };
+  render();
+  if (!db) return;
+  const eng = ENG.find((e) => e.key === votes[i].choice);
+  try {
+    await db.collection(CFG.collection).doc(String(i).padStart(2, '0')).set({
+      text: DATA[i].text, choice: votes[i].choice || '', engine: eng ? eng.label : (votes[i].choice === 'x' ? 'hiçbiri' : ''),
+      note: votes[i].note || '', at: Date.now() });
+    $('#save').textContent += ' · kaydedildi';
+  } catch (e) { $('#save').textContent = 'Kaydedilemedi, tekrar deneyin'; }
+}
+
+// Sesler kim + otomatik denetim
+$('#who').innerHTML = ENG.map((e) => `<div><b>${e.letter} · ${e.label}</b><p>${e.desc || ''}</p></div>`).join('');
+if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+const REC = ENG.filter((e) => e.key !== 'browser');
+$('#asr-head').innerHTML = `<tr><th>Metin</th>${REC.map((e) => `<th>${e.letter} · duyulan</th>`).join('')}</tr>`;
+$('#asr').innerHTML = DATA.map((d) => `<tr><td>${d.text}</td>${REC.map((e) => {
+    const a = (d.asr || {})[e.key]; if (!a) return '<td>–</td>';
+    return `<td class="${a[0] ? 'y' : 'n'}">${a[0] ? '✓' : '✗ ' + a[1]}</td>`; }).join('')}</tr>`).join('')
+  + `<tr><td><b>Toplam</b></td>${REC.map((e) => `<td><b>${DATA.filter((d) => (d.asr || {})[e.key]?.[0]).length} / ${DATA.length}</b></td>`).join('')}</tr>`;
+
+render();
+(async () => {
+  try { db = window.claude ? await window.claude.use('db') : null; } catch (e) { db = null; }
+  if (!db) { $('#offline').hidden = false; return; }
+  db.collection(CFG.collection).onSnapshot((snap) => {
+    snap.docs.forEach((d) => { const x = d.data() || {}; votes[Number(d.id)] = { choice: x.choice || '', note: x.note || '' }; });
+    render();
+  }, () => { $('#offline').hidden = false; });
+})();
+</script>

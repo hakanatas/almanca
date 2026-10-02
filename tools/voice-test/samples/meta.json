@@ -1,0 +1,222 @@
+{
+ "piper": {
+  "label": "Piper \"Thorsten\"",
+  "desc": "Ücretsiz, çevrimdışı açık kaynak ses (CC0).",
+  "asr": [
+   [
+    true,
+    "Der Hund"
+   ],
+   [
+    true,
+    "Die Küche."
+   ],
+   [
+    true,
+    "Die Tür"
+   ],
+   [
+    true,
+    "der Schlüssel"
+   ],
+   [
+    false,
+    "Der Lüfe"
+   ],
+   [
+    true,
+    "Das Mädchen."
+   ],
+   [
+    false,
+    "der Kieser."
+   ],
+   [
+    false,
+    "Tospit."
+   ],
+   [
+    false,
+    "Das hilft."
+   ],
+   [
+    true,
+    "Der Lehrer"
+   ],
+   [
+    false,
+    "Das kann nicht hin."
+   ],
+   [
+    true,
+    "das Ei"
+   ],
+   [
+    true,
+    "Die Schwester."
+   ],
+   [
+    false,
+    "Das fahre."
+   ],
+   [
+    true,
+    "Das Brötchen."
+   ],
+   [
+    true,
+    "Die Straße"
+   ],
+   [
+    false,
+    "Spanielf"
+   ],
+   [
+    true,
+    "Entschuldigung."
+   ],
+   [
+    true,
+    "Ich heiße Max."
+   ],
+   [
+    true,
+    "Du kommst aus der Türkei."
+   ],
+   [
+    false,
+    "Er ist Brot."
+   ],
+   [
+    true,
+    "Am Wochenende fahre ich Fahrrad."
+   ],
+   [
+    true,
+    "Die Lampe ist auf dem Tisch."
+   ],
+   [
+    false,
+    "Bringst du Tee?"
+   ],
+   [
+    true,
+    "Wie geht es dir?"
+   ],
+   [
+    true,
+    "Lernen macht Spaß."
+   ]
+  ]
+ },
+ "chatterbox": {
+  "label": "Chatterbox Multilingual",
+  "desc": "Ücretsiz, MIT lisanslı; 3 denemeden Whisper'ın en iyi duyduğu seçildi.",
+  "asr": [
+   [
+    false,
+    "Der Hund. On..."
+   ],
+   [
+    false,
+    "die Tücher"
+   ],
+   [
+    true,
+    "Die Tür"
+   ],
+   [
+    true,
+    "der Schlüssel"
+   ],
+   [
+    true,
+    "Der Löwe"
+   ],
+   [
+    true,
+    "Das Mädchen."
+   ],
+   [
+    true,
+    "der Käse"
+   ],
+   [
+    true,
+    "Das Bett."
+   ],
+   [
+    false,
+    "Das heft ein N auch auf. Das"
+   ],
+   [
+    false,
+    "Der Lehrer, Eif, Kaa."
+   ],
+   [
+    false,
+    "Das Kaninchen. Ein..."
+   ],
+   [
+    false,
+    "Das sei."
+   ],
+   [
+    true,
+    "Die Schwester?"
+   ],
+   [
+    true,
+    "Das Fahrrad?"
+   ],
+   [
+    false,
+    "Das Beutchen!"
+   ],
+   [
+    false,
+    "Die Straße. Die Straße."
+   ],
+   [
+    false,
+    "ZÖV"
+   ],
+   [
+    false,
+    "Entschuldigung. Entschuldigung."
+   ],
+   [
+    true,
+    "Ich heiße Max."
+   ],
+   [
+    true,
+    "Du kommst aus der Türkei."
+   ],
+   [
+    false,
+    "Er ist brot, er ist ba..."
+   ],
+   [
+    true,
+    "Am Wochenende fahre ich Fahrrad."
+   ],
+   [
+    true,
+    "Die Lampe ist auf dem Tisch."
+   ],
+   [
+    true,
+    "Trinkst du Tee?"
+   ],
+   [
+    false,
+    "Begeht's, dear?"
+   ],
+   [
+    true,
+    "Lernen macht Spaß!"
+   ]
+  ]
+ }
+}

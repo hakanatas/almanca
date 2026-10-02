@@ -67,17 +67,34 @@ function beep(ok) {
   } catch (e) { /* ses desteklenmiyor */ }
 }
 
+// Seslendirme: önce önceden kaydedilmiş dosya (js/audio.js → AUDIO_CLIPS), yoksa tarayıcı sesi.
 const canSpeak = 'speechSynthesis' in window;
+const CLIPS = typeof AUDIO_CLIPS !== 'undefined' ? AUDIO_CLIPS : {};
+const hasClip = (text) => Object.prototype.hasOwnProperty.call(CLIPS, text);
+const clipPlayer = new Audio();
+clipPlayer.preload = 'auto';
 let deVoice = null;
 function loadVoice() {
   if (!canSpeak) return;
-  const voices = speechSynthesis.getVoices();
-  deVoice = voices.find((v) => v.lang === 'de-DE') || voices.find((v) => v.lang && v.lang.startsWith('de')) || null;
+  // Birden çok Almanca ses varsa en doğal olanı seç (ör. "Google Deutsch", "Anna", "Natural")
+  const vs = speechSynthesis.getVoices().filter((v) => /^de(-|_|$)/i.test(v.lang));
+  const score = (v) => (/natural|neural|online|premium|enhanced|wavenet/i.test(v.name) ? 4 : 0) + (/google/i.test(v.name) ? 3 : 0)
+    + (/anna|katja|helena|petra|markus|yannick|conrad/i.test(v.name) ? 2 : 0) + (v.lang === 'de-DE' ? 1 : 0) - (/espeak/i.test(v.name) ? 5 : 0);
+  deVoice = vs.sort((a, b) => score(b) - score(a))[0] || null;
 }
 if (canSpeak) { loadVoice(); speechSynthesis.onvoiceschanged = loadVoice; }
 function speak(text, rate = 0.85) {
+  if (canSpeak) speechSynthesis.cancel();
+  clipPlayer.pause();
+  if (hasClip(text)) {
+    clipPlayer.src = CLIPS[text];
+    // "Yavaş dinle": kayıt yavaşlatılır, ses tonu korunur
+    clipPlayer.playbackRate = rate < 0.7 ? 0.75 : 1;
+    clipPlayer.preservesPitch = true;
+    clipPlayer.play().catch(() => {});
+    return;
+  }
   if (!canSpeak) return;
-  speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'de-DE';
   if (deVoice) u.voice = deVoice;
@@ -462,7 +479,7 @@ const GAMES = {
         const slow = el('button', 'link', 'Yavaş dinle');
         slow.onclick = () => speak(`${w.art} ${w.de}`, 0.55);
         p.appendChild(slow);
-        if (!canSpeak) p.appendChild(el('p', 'hint', `Tarayıcın sesi desteklemiyor. Kelime: <b>${w.art} ${w.de}</b>`));
+        if (!canSpeak && !hasClip(`${w.art} ${w.de}`)) p.appendChild(el('p', 'hint', `Tarayıcın sesi desteklemiyor. Kelime: <b>${w.art} ${w.de}</b>`));
         area.appendChild(p);
         const wrap = choiceButtons(area, opts, w, (ok, o) => {
           answer(ok, `<b class="t-${w.art}">${w.art} ${w.de}</b> = ${w.e} ${w.tr}`,

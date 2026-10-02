@@ -186,7 +186,33 @@ firebase emulators:start --only auth,firestore --project demo-almanca
 # http://localhost:8000/index.html?emulator=1 adresini açın
 ```
 
-## 7. Yol haritası (sonraki adımlar)
+## 7. Seslendirme
+
+Oyun önce **önceden kaydedilmiş ses dosyasını** çalar (`js/audio.js` → `audio/*.mp3`),
+kayıt yoksa cihazın tarayıcı sesine düşer. Kayıtlar `tools/generate_audio.py` ile
+`js/data.js`'teki bütün kelime ve cümlelerden tek komutla üretilir; ses değiştirilince
+hepsi yeniden kaydedilir.
+
+**Durum:** Ses seçimi sürüyor, bu yüzden `js/audio.js` henüz `index.html`'e eklenmedi
+(oyun şimdilik tarayıcı sesini kullanıyor). Ücretsiz iki ses denendi ve yeterli bulunmadı:
+
+| Ses | Whisper denetimi (26 zor metin) | Sonuç |
+|---|---|---|
+| Piper "Thorsten" (CC0) | 17/26 | ö/ü/ä'de zayıf |
+| Chatterbox Multilingual (MIT) | 14/26 | daha doğal ama kısa kelimelerde fazladan ses üretiyor |
+
+Sıradaki adım Google Cloud Text-to-Speech (Chirp 3 HD). Bizim hacmimiz (yaklaşık 3.000–40.000
+karakter) aylık 1 milyon karakterlik ücretsiz kotanın içinde kalır.
+
+1. Google Cloud'da *Cloud Text-to-Speech API*'yi etkinleştirip yalnızca bu API ile sınırlı bir
+   API anahtarı oluşturun; anahtarı `GOOGLE_TTS_API_KEY` ortam değişkeni olarak tanımlayın
+   (Claude Code ortamında: ortam ayarları → API credentials / ortam değişkeni).
+2. Karşılaştırma sayfası: `python3 tools/voice-test/compare_voices.py --auto --whisper --collection round2`
+   → `tools/voice-test/ses-karsilastirma.html` (claude.ai'de `db` yeteneğiyle yayınlanır, oylar oraya yazılır).
+3. Seçilen sesle kayıt: `python3 tools/generate_audio.py --engine google --voice de-DE-Chirp3-HD-…`
+   ve `index.html`'de `js/app.js`'ten önce `<script src="js/audio.js"></script>` eklenir.
+
+## 8. Yol haritası (sonraki adımlar)
 
 - [x] Okul hesabıyla giriş, çalışma kaydı ve yönetici rapor paneli
 - [ ] **Sınıf ve şube** bilgisi (raporu sınıfa göre süzmek için)
