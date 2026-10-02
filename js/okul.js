@@ -284,6 +284,18 @@ const Okul = {
     return leagueFlush();
   },
 
+  // Hafıza oyunu için öğretmenin kelime setleri. Öğrenci yalnızca kendi sınıfına (ya da herkese) açık setleri görür.
+  async wordSets() {
+    if (DEMO || !user || !fb) return [];
+    const snap = await fb.getDocs(fb.collection(fb.db, 'hafiza_setleri'));
+    let list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (user.kind === 'ogrenci') {
+      const mine = await Okul.myClass();
+      list = list.filter((x) => !(x.siniflar || []).length || (mine && x.siniflar.includes(mine.sinif)));
+    }
+    return list.sort((a, b) => String(a.ad).localeCompare(String(b.ad), 'tr', { numeric: true }));
+  },
+
   // Bir sınıfın o haftaki sıralaması (çoktan aza)
   async leagueTable(sinif, hafta = Okul.weekId()) {
     if (DEMO || !user || !fb || !sinif) return [];

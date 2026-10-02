@@ -109,6 +109,20 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Hafıza oyunu kelime setleri: öğretmen havuzdan kelime seçer, okulun bütün hesapları okur.
+    // kelimeler: "der Hund" biçiminde (artikel + kelime), siniflar boşsa set bütün sınıflara açıktır.
+    match /hafiza_setleri/{id} {
+      allow read: if schoolUser();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['ad', 'kelimeler', 'siniflar', 'olusturan', 'guncelleme'])
+        && request.resource.data.ad is string && request.resource.data.ad.size() > 0 && request.resource.data.ad.size() <= 60
+        && request.resource.data.kelimeler is list && request.resource.data.kelimeler.size() >= 4 && request.resource.data.kelimeler.size() <= 60
+        && request.resource.data.siniflar is list && request.resource.data.siniflar.size() <= 40
+        && request.resource.data.olusturan == request.auth.token.email.lower()
+        && request.resource.data.guncelleme == request.time;
+      allow delete: if isAdmin();
+    }
+
     // Profil + ilerleme (XP, rozetler). Herkes yalnızca kendi belgesini yazar.
     match /users/{uid} {
       allow get: if schoolUser() && (request.auth.uid == uid || isAdmin());
