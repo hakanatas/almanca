@@ -1,5 +1,5 @@
 // tools/generate_audio.py tarafından üretildi; elle düzenlemeyin.
-// Ses: Thorsten-Voice (CC0), Piper nöral TTS ile kaydedildi.
+// Ses: Google Cloud TTS · de-DE-Chirp3-HD-Charon
 const AUDIO_CLIPS = {
  "der Vater": "audio/der-vater.mp3",
  "die Mutter": "audio/die-mutter.mp3",

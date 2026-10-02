@@ -193,26 +193,31 @@ kayıt yoksa cihazın tarayıcı sesine düşer. Kayıtlar `tools/generate_audio
 `js/data.js`'teki bütün kelime ve cümlelerden tek komutla üretilir; ses değiştirilince
 hepsi yeniden kaydedilir.
 
-**Seçilen ses: Piper "Thorsten"** (ücretsiz, çevrimdışı, CC0). 26 zor metinlik körlemesine
-karşılaştırmada öğretmen oylarının çoğunu aldı (9 oyun 8'i). Oyun bu kayıtları kullanıyor.
+**Kullanılan ses: Google Cloud Text-to-Speech, Chirp 3 HD "Charon"** (erkek ses, hız 0.92).
+171 kaydın tamamı bu sesle üretildi; Piper'a göre yaklaşık %35 daha yavaş ve tane tane
+konuşuyor (A1 öğrencisi için daha uygun). Bizim hacmimiz (yaklaşık 3.000–40.000 karakter)
+aylık 1 milyon karakterlik ücretsiz kotanın içinde kalır.
+
+Yeni kelime eklenince (anahtar `GOOGLE_TTS_API_KEY` ortam değişkeninde olmalı; yalnızca
+yeni metinler kaydedilir, eskiler korunur):
+
+```bash
+python3 tools/generate_audio.py --engine google --voice de-DE-Chirp3-HD-Charon
+```
+
+Başka bir Chirp 3 HD sesine geçmek için `--voice` değiştirilir (ör. kadın ses
+`de-DE-Chirp3-HD-Kore`); ses değişince bütün kayıtlar otomatik yeniden üretilir.
+Sesleri karşılaştırma sayfası:
+`python3 tools/voice-test/compare_voices.py --auto --whisper --collection round2`
+→ `tools/voice-test/ses-karsilastirma.html`.
+
+**Önceki ses: Piper "Thorsten"** (ücretsiz, çevrimdışı, CC0). Google anahtarı yokken
+yedek olarak kullanılabilir: `python3 tools/generate_audio.py --engine piper --model yol/de_DE-thorsten-high.onnx`
 
 | Ses | Whisper denetimi (26 zor metin) | Not |
 |---|---|---|
-| Piper "Thorsten" (CC0) | 17/26 | seçilen; cümlelerde güçlü, bazı ö/ü/ä kelimelerinde zayıf |
+| Piper "Thorsten" (CC0) | 17/26 | ilk turda öğretmen oylarını aldı (9 oyun 8'i); bazı ö/ü/ä kelimelerinde zayıf |
 | Chatterbox Multilingual (MIT) | 14/26 | daha doğal ama kısa kelimelerde fazladan ses üretiyor |
-
-Yeni kelime eklenince: `python3 tools/generate_audio.py --engine piper --model yol/de_DE-thorsten-high.onnx`
-
-İleride daha iyi bir ses istenirse Google Cloud Text-to-Speech (Chirp 3 HD) hazır;
-bizim hacmimiz (yaklaşık 3.000–40.000
-karakter) aylık 1 milyon karakterlik ücretsiz kotanın içinde kalır.
-
-1. Google Cloud'da *Cloud Text-to-Speech API*'yi etkinleştirip yalnızca bu API ile sınırlı bir
-   API anahtarı oluşturun; anahtarı `GOOGLE_TTS_API_KEY` ortam değişkeni olarak tanımlayın
-   (Claude Code ortamında: ortam ayarları → API credentials / ortam değişkeni).
-2. Karşılaştırma sayfası: `python3 tools/voice-test/compare_voices.py --auto --whisper --collection round2`
-   → `tools/voice-test/ses-karsilastirma.html` (claude.ai'de `db` yeteneğiyle yayınlanır, oylar oraya yazılır).
-3. Seçilen sesle kayıt: `python3 tools/generate_audio.py --engine google --voice de-DE-Chirp3-HD-…`
 
 ## 8. Yol haritası (sonraki adımlar)
 
@@ -223,5 +228,6 @@ karakter) aylık 1 milyon karakterlik ücretsiz kotanın içinde kalır.
 - [ ] **Konuşma oyunu:** Mikrofonla kelimeyi söyle, konuşma tanıma ile kontrol et
 - [ ] **Çoğul hali (Plural)** ve **akkusativ** (einen/eine/ein) mini oyunları
 - [ ] A2 seviyesi temaları (Stadt, Kleidung, Wetter, Körper…)
+- [x] Önceden kaydedilmiş Almanca sesler (Google Chirp 3 HD)
 - [ ] Gerçek ses kayıtları (anadil konuşucusu) ve çizim karakterler
 - [ ] Çevrimdışı çalışma için service worker, mağaza için Capacitor/React Native paketi
