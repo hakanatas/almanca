@@ -23,11 +23,25 @@ const todayStr = (d = new Date()) => d.toISOString().slice(0, 10);
 const SAVE_KEY = 'deutsch-macerasi-v1';
 const defaultState = () => ({ xp: 0, streak: 0, lastDay: null, theme: 'all', best: {}, played: {}, badges: [] });
 let state = defaultState();
-try {
-  const raw = localStorage.getItem(SAVE_KEY);
-  if (raw) state = Object.assign(defaultState(), JSON.parse(raw));
-} catch (e) { /* gizli sekme vb. – kayıtsız devam */ }
-const save = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* yoksay */ } };
+// Her hesabın ilerlemesi ayrı tutulur (okuldaki ortak bilgisayarlar için).
+// Girişli kullanımda asıl kayıt buluttadır (Okul.saveProgress); yerel kopya hız içindir.
+let saveKey = SAVE_KEY;
+const save = () => {
+  try { localStorage.setItem(saveKey, JSON.stringify(state)); } catch (e) { /* gizli sekme vb. */ }
+  if (window.Okul) Okul.saveProgress('almanca', state);
+};
+function useProfile(uid, cloud) {
+  saveKey = uid === 'local' ? SAVE_KEY : `${SAVE_KEY}:${uid}`;
+  let local = null;
+  try { local = JSON.parse(localStorage.getItem(saveKey) || 'null'); } catch (e) { /* yoksay */ }
+  // Hangisi daha ilerideyse onu kullan (başka cihazda oynanmış olabilir)
+  const best = [cloud, local].filter((x) => x && typeof x.xp === 'number').sort((a, b) => b.xp - a.xp)[0];
+  state = Object.assign(defaultState(), best || {});
+  try { localStorage.setItem(saveKey, JSON.stringify(state)); } catch (e) { /* yoksay */ }
+  renderHome();
+}
+// Okul modülüne gönderim (modül yüklenmemişse sessizce atlanır)
+const okul = (fn, arg) => { try { if (window.Okul) return Okul[fn](arg); } catch (e) { console.warn(e); } };
 
 // Seviye n için gereken toplam XP: 50 * (n-1)^2  → 0, 50, 200, 450, 800...
 const levelOf = (xp) => Math.floor(Math.sqrt(xp / 50)) + 1;
@@ -170,6 +184,7 @@ function startGame(id) {
   $('#game-area').innerHTML = '';
   $('#feedback').hidden = true;
   show('screen-game');
+  okul('startSession', { app: 'almanca', game: id, theme: state.theme });
   g.start($('#game-area'), session);
 }
 
@@ -180,8 +195,9 @@ function setProgress(p) { $('#hud-progress').style.width = `${Math.min(100, p * 
 function addScore(n) { session.score += n; $('#hud-score').textContent = session.score; }
 
 // Doğru/yanlış kaydı + kısa geri bildirim
-function answer(ok, detail) {
+function answer(ok, detail, item) {
   session.total++;
+  if (item) okul('record', { ...item, ok });
   if (ok) {
     session.correct++;
     session.combo++;
@@ -235,6 +251,7 @@ function finish() {
   if (state.streak >= 3) give('seri3');
   if (levelOf(state.xp) >= 5) give('seviye5');
   save();
+  okul('endSession', { completed: true, score: s.score });
 
   const titles = ['Weiter üben!', 'Gut gemacht!', 'Sehr gut!', 'Ausgezeichnet!'];
   $('#res-title').textContent = titles[stars];
@@ -289,7 +306,7 @@ function choiceButtons(container, options, correct, onDone, render = (o) => o) {
       const ok = o === correct;
       b.classList.add(ok ? 'right' : 'wrong');
       if (!ok) [...wrap.children][options.indexOf(correct)].classList.add('right');
-      onDone(ok);
+      onDone(ok, o);
     };
     wrap.appendChild(b);
   });
@@ -355,7 +372,8 @@ const GAMES = {
           blank.textContent = w.art;
           blank.className = 'blank filled t-' + w.art;
           speak(`${w.art} ${w.de}`);
-          answer(ok, ok ? '' : `Doğrusu: <b class="t-${w.art}">${w.art} ${w.de}</b><br><small>İpucu: ${artikelTipp(w)}</small>`);
+          answer(ok, ok ? '' : `Doğrusu: <b class="t-${w.art}">${w.art} ${w.de}</b><br><small>İpucu: ${artikelTipp(w)}</small>`,
+            { q: w.de, expected: w.art, given: b.dataset.a });
           later(s, next, ok ? 450 : 1500);
         };
       });
@@ -393,13 +411,18 @@ const GAMES = {
               found++;
               setProgress(found / words.length);
               x.b.classList.add('done'); y.b.classList.add('done');
-              answer(true, `<b class="t-${x.c.w.art}">${x.c.w.art} ${x.c.w.de}</b> = ${x.c.w.tr}`);
+              answer(true, `<b class="t-${x.c.w.art}">${x.c.w.art} ${x.c.w.de}</b> = ${x.c.w.tr}`,
+                { q: `${x.c.w.art} ${x.c.w.de}`, expected: x.c.w.tr, given: x.c.w.tr });
               open = [];
               if (found === words.length) later(s, finish, 900);
             } else {
               // Yanlış eşleşme sadece seriyi bozar; doğruluk oranı hamle sayısına göre hesaplanır
               s.combo = 0;
               s.mistakes++;
+              const de = x.c.type === 'de' ? x.c.w : y.c.w, pic = x.c.type === 'de' ? y.c.w : x.c.w;
+              okul('record', x.c.type === y.c.type
+                ? { q: `${x.c.w.de} / ${y.c.w.de}`, expected: 'kelime + resim', given: 'aynı türden iki kart', ok: false }
+                : { q: `${de.art} ${de.de}`, expected: de.tr, given: pic.tr, ok: false });
               beep(false);
               setTimeout(() => { x.b.classList.remove('flip'); y.b.classList.remove('flip'); open = []; }, 900);
             }
@@ -441,8 +464,9 @@ const GAMES = {
         p.appendChild(slow);
         if (!canSpeak) p.appendChild(el('p', 'hint', `Tarayıcın sesi desteklemiyor. Kelime: <b>${w.art} ${w.de}</b>`));
         area.appendChild(p);
-        const wrap = choiceButtons(area, opts, w, (ok) => {
-          answer(ok, `<b class="t-${w.art}">${w.art} ${w.de}</b> = ${w.e} ${w.tr}`);
+        const wrap = choiceButtons(area, opts, w, (ok, o) => {
+          answer(ok, `<b class="t-${w.art}">${w.art} ${w.de}</b> = ${w.e} ${w.tr}`,
+            { q: `${w.art} ${w.de}`, expected: w.tr, given: o.tr });
           r++;
           later(s, round, ok ? 900 : 1900);
         }, (o) => `<span class="emoji">${o.e}</span><small>${o.tr}</small>`);
@@ -497,7 +521,8 @@ const GAMES = {
           const full = sent.de.join(' ');
           speak(full);
           $('#train').classList.add(ok ? 'go' : 'shake');
-          answer(ok, ok ? full : `Doğrusu: <b>${full}</b>`);
+          answer(ok, ok ? full : `Doğrusu: <b>${full}</b>`,
+            { q: sent.tr, expected: full, given: placed.map((x) => x.t).join(' ') });
           $('#check').disabled = true;
           r++;
           later(s, round, ok ? 1500 : 2800);
@@ -530,14 +555,15 @@ const GAMES = {
             <div class="word">${subj} <span class="blank">?</span> ${v.obj}.</div>
             <div class="tr"><b>${v.inf}</b> = ${v.tr} · <i>${PRONOUNS[p]}</i> = ${PRONOUN_TR[p]}</div>
           </div>`;
-        choiceButtons(area, options, correct, (ok) => {
-          const sentence = `${subj} ${correct} ${v.obj}.`;
+        choiceButtons(area, options, correct, (ok, chosen) => {
+          const sentence = verbSentence(v, p);
           area.querySelector('.blank').textContent = correct;
           area.querySelector('.blank').classList.add('filled');
           if (ok) $('#rocket').classList.add('fly');
           speak(sentence);
           const table = PRONOUNS.map((pr, i) => `${pr} <b>${v.forms[i]}</b>`).join(' · ');
-          answer(ok, ok ? sentence : `Doğrusu: <b>${sentence}</b><br><small>${table}</small>`);
+          answer(ok, ok ? sentence : `Doğrusu: <b>${sentence}</b><br><small>${table}</small>`,
+            { q: `${subj} ___ ${v.obj} (${v.inf})`, expected: correct, given: chosen });
           r++;
           later(s, round, ok ? 1100 : 3000);
         });
@@ -549,7 +575,11 @@ const GAMES = {
 
 // ---------- Butonlar ----------
 $('#btn-quit').onclick = () => {
-  if (session) { session.active = false; if (session.cleanup) session.cleanup(); }
+  if (session) {
+    if (session.active) okul('endSession', { completed: false, score: session.score });
+    session.active = false;
+    if (session.cleanup) session.cleanup();
+  }
   renderHome();
 };
 $('#btn-home').onclick = renderHome;
@@ -575,7 +605,8 @@ document.body.insertAdjacentHTML('afterbegin', INK_DEFS);
 $('#brushline').innerHTML = BRUSHLINE;
 document.querySelectorAll('[data-icon]').forEach((n) => { n.innerHTML = UI_ICONS[n.dataset.icon]; });
 $('#hero-max').innerHTML = maxSVG();
-const HERO_LINES = ['Hallo! Ich bin Max.', 'Los geht\'s!', 'Lernen macht Spaß!', 'Der, die oder das?', 'Wie geht\'s dir?'];
+if ($('#gate-max')) $('#gate-max').innerHTML = maxSVG();
+const HERO_LINES = MAX_SAETZE;
 let heroLine = 0;
 setInterval(() => {
   const b = $('#hero-bubble');
@@ -587,3 +618,10 @@ setInterval(() => {
 }, 4000);
 
 renderHome();
+// Giriş tamamlanınca o hesabın ilerlemesini yükle. okul.js bir modül olduğu için bu
+// dosyadan sonra çalışır; hazır olduğunda window.Okul tanımlanır.
+(function waitForOkul(tries = 0) {
+  if (window.Okul) Okul.onReady((u, progress) => useProfile(u.uid, progress.almanca));
+  else if (tries < 100) setTimeout(() => waitForOkul(tries + 1), 50);
+  else useProfile('local', null); // modül yüklenemedi: yerel kayıtla devam
+})();

@@ -168,3 +168,12 @@ const MASKOT_SOZLERI = {
   dogru: ['Super!', 'Toll!', 'Sehr gut!', 'Prima!', 'Klasse!', 'Wunderbar!', 'Genau!'],
   yanlis: ['Schade!', 'Fast!', 'Nicht schlimm!', 'Weiter so!', 'Noch einmal!'],
 };
+
+// Max'in ana ekrandaki konuşma balonu (Max'e dokununca seslendirilir)
+const MAX_SAETZE = ['Hallo! Ich bin Max.', 'Los geht\'s!', 'Lernen macht Spaß!', 'Der, die oder das?', 'Wie geht\'s dir?'];
+
+// Fiil Roketi'ndeki cümle: "Du spielst Fußball."
+function verbSentence(v, p) {
+  const subj = PRONOUNS[p][0].toUpperCase() + PRONOUNS[p].slice(1);
+  return `${subj} ${v.forms[p]} ${v.obj}.`;
+}

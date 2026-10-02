@@ -77,6 +77,10 @@ mürekkep tonlarında: **der** mavi mürekkep, **die** mühür kırmızısı, **
 index.html        Ekranlar (ana menü, oyun, sonuç)
 css/style.css     Görünüm, animasyonlar, karanlık mod
 js/data.js        TÜM İÇERİK: temalar, kelimeler, cümleler, fiiller, artikel kuralları
+js/okul.js        Okul hesabıyla giriş + çalışma kaydı (bütün uygulamalar için ortak)
+js/firebase-config.js  Firebase proje ayarları
+js/admin.js       Yönetici rapor paneli (admin.html)
+firebase/         Firestore güvenlik kuralları ve indeksler
 js/art.js         Maskot Max ve ikonların SVG çizimleri
 js/app.js         Oyun motoru, 5 mini oyun, XP/rozet sistemi
 manifest.json     Ana ekrana eklenebilir uygulama (PWA) bilgisi
@@ -98,8 +102,94 @@ Cümle eklemek (kelimeler doğru sırada yazılır, oyun kendisi karıştırır)
 
 Yeni tema için `THEMES` dizisine aynı yapıda yeni bir nesne eklenir; menüde otomatik görünür.
 
-## 6. Yol haritası (sonraki adımlar)
+## 6. Okul hesabıyla giriş ve çalışma raporları
 
+Oyuna yalnızca **@alkev.k12.tr** ve **@stu.alkev.k12.tr** Google hesaplarıyla girilir.
+Her oyun oturumu (hangi oyun, ne kadar süre, hangi soruya ne cevap verildi) kaydedilir;
+yönetici `admin.html` sayfasında hepsini tek yerde görür ve CSV olarak indirir.
+Altyapı Firebase'dir (Google girişi + Firestore veritabanı), ücretsiz katman bir okul için yeterlidir.
+
+**Güvenlik nasıl sağlanıyor?** Alan adı kontrolü yalnızca tarayıcıda değil, sunucudaki
+`firebase/firestore.rules` kurallarında da yapılır: başka bir Google hesabıyla giren kişi
+hiçbir veriyi okuyamaz, yazamaz. Öğrenci yalnızca kendi kayıtlarını görür, kayıtlar
+sonradan değiştirilemez, toplu raporu yalnızca yönetici okur. Kurallar Firestore emülatöründe
+28 senaryoyla test edildi (sahte alan adları, başkası adına kayıt, yetkisiz öğretmen vb.).
+
+`js/firebase-config.js` boşken oyun **deneme modunda** girişsiz çalışır ve hiçbir veri göndermez.
+
+### Kurulum (bir kez, yaklaşık 15 dakika)
+
+1. **Proje:** [console.firebase.google.com](https://console.firebase.google.com) → *Proje ekle*
+   (Google Analytics gerekmez).
+2. **Google girişi:** *Authentication → Başlayın → Sign-in method → Google → Etkinleştir*,
+   destek e-postası seçip kaydedin.
+3. **Yetkili alan adı:** *Authentication → Settings → Yetkili alan adları → Alan adı ekle*:
+   `hakanatas.github.io`
+4. **Veritabanı:** *Firestore Database → Veritabanı oluştur* → konum olarak Avrupa
+   (`eur3` veya `europe-west`) → *Üretim modunda başlat*.
+5. **Kurallar:** *Firestore → Kurallar* sekmesine `firebase/firestore.rules` dosyasının tamamını
+   yapıştırıp *Yayınla*'ya basın.
+6. **Yönetici:** *Firestore → Veri → Koleksiyon başlat* → koleksiyon kimliği `admins`,
+   belge kimliği **e-posta adresiniz, küçük harfle** (ör. `ad.soyad@alkev.k12.tr`),
+   bir alan ekleyin (ör. `not` = `yönetici`). Başka yönetici eklemek için aynı koleksiyona
+   yeni belge eklemeniz yeterli.
+7. **Web uygulaması:** *Proje ayarları (⚙) → Genel → Uygulamalarınız → Web (</>)* → takma ad
+   verip kaydedin. Gösterilen `firebaseConfig` değerlerini `js/firebase-config.js`
+   içine yapıştırın. (Bu değerler gizli değildir.)
+8. **Yayın:** GitHub'da depo → *Settings → Pages → Deploy from a branch → main / (root)*.
+   Oyun `https://hakanatas.github.io/almanca/`, rapor paneli
+   `https://hakanatas.github.io/almanca/admin.html` adresinde açılır.
+
+> **Öğrenciler "Bu uygulama engellendi" görürse:** Google Workspace for Education, 18 yaş
+> altı kullanıcıların tanımadığı uygulamalara Google ile girmesini varsayılan olarak engeller.
+> Okulun Workspace yöneticisi *Admin konsolu → Güvenlik → Erişim ve veri kontrolü →
+> API denetimleri → Üçüncü taraf uygulama erişimini yönet* bölümünde bu uygulamayı
+> (Firebase'in oluşturduğu OAuth istemcisi) **Güvenilir** olarak işaretlemelidir.
+
+> **Kişisel veriler:** Kaydedilen bilgiler ad, okul e-postası ve oyun sonuçlarıdır. Öğrencileri
+> ve velileri bilgilendirmeniz (KVKK aydınlatma) önerilir.
+
+### Kaydedilen veriler
+
+| Koleksiyon | İçerik | Kim okur |
+|---|---|---|
+| `users/{uid}` | ad, e-posta, öğrenci/öğretmen, ilk ve son giriş, uygulama ilerlemesi (XP, rozetler) | kişinin kendisi, yönetici |
+| `sessions/{id}` | uygulama, oyun, tema, başlangıç/bitiş, etkin süre (sekme arkadayken saat durur), doğru/yanlış sayısı, puan, tamamlandı mı, her cevap (soru, doğrusu, verilen, süre) | kişinin kendisi, yönetici |
+| `admins/{e-posta}` | yönetici listesi (yalnızca konsoldan düzenlenir) | — |
+
+### Başka bir uygulamaya eklemek (ör. Nokta'nın Filmleri)
+
+Aynı Firebase projesi bütün uygulamalara yeter; raporlar tek panelde birleşir.
+
+1. `js/firebase-config.js` ve `js/okul.js` dosyalarını uygulamaya kopyalayın, sayfaya ekleyin:
+   ```html
+   <script src="js/firebase-config.js"></script>
+   <script type="module" src="js/okul.js"></script>
+   ```
+2. Giriş katmanını ekleyin: `id="okul-gate"` olan bir kutu, içinde `data-okul-signin`
+   özellikli bir düğme ve `data-okul-msg` özellikli bir mesaj alanı (örnek: `index.html`).
+   Kullanıcı adı ve çıkış düğmesi için `id="okul-who"` olan bir alan.
+3. Uygulamada çalışmayı bildirin:
+   ```js
+   Okul.startSession({ app: 'nokta', game: 'kac-otobus' });          // başlarken
+   Okul.record({ q: '370 ÷ 45', expected: '9', given: '8', ok: false }); // her cevapta
+   Okul.endSession({ completed: true, score: 80 });                   // biterken
+   ```
+4. Paneldeki adlar için `js/admin.js` içindeki `APPS` listesine uygulamayı ekleyin.
+
+### Kuralları yerelde test etmek (geliştiriciler için)
+
+```bash
+npm i -g firebase-tools
+firebase emulators:start --only auth,firestore --project demo-almanca
+# js/firebase-config.js'e projectId: 'demo-almanca', apiKey: 'demo' yazıp
+# http://localhost:8000/index.html?emulator=1 adresini açın
+```
+
+## 7. Yol haritası (sonraki adımlar)
+
+- [x] Okul hesabıyla giriş, çalışma kaydı ve yönetici rapor paneli
+- [ ] **Sınıf ve şube** bilgisi (raporu sınıfa göre süzmek için)
 - [ ] **Sınıf modu:** Öğretmen bir kod paylaşır, öğrenciler aynı anda yarışır (canlı liderlik tablosu)
 - [ ] **Aralıklı tekrar (spaced repetition):** Yanlış yapılan kelimeler daha sık sorulsun
 - [ ] **Konuşma oyunu:** Mikrofonla kelimeyi söyle, konuşma tanıma ile kontrol et

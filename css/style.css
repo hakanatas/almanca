@@ -397,3 +397,41 @@ small { color: var(--ink-soft); }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .brushline path, .num svg path { stroke-dashoffset: 0; }
 }
+
+/* ---------- GİRİŞ KATMANI ---------- */
+.gate {
+  position: fixed; inset: 0; z-index: 50; overflow-y: auto;
+  display: grid; place-items: center; padding: 24px 16px;
+  background: var(--paper);
+  background-image: radial-gradient(ellipse at 18% 8%, rgba(255, 252, 244, .8), transparent 55%), radial-gradient(ellipse at 90% 80%, rgba(214, 196, 164, .4), transparent 60%);
+}
+.gate-card { width: min(460px, 100%); display: grid; gap: 14px; }
+.gate-max { width: 190px; justify-self: end; margin-bottom: -18px; }
+.gate .kicker { padding-right: 0; }
+.gate h1 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: clamp(42px, 11vw, 60px); line-height: .98; letter-spacing: -.02em; }
+.google-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px; margin-top: 6px;
+  padding: 13px 22px; border-radius: 10px; border: 2.5px solid var(--ink); background: var(--paper-hi);
+  font-family: var(--mono); font-size: 14.5px; letter-spacing: .02em; box-shadow: 0 4px 0 var(--ink);
+  transition: transform .08s, box-shadow .08s, background .2s;
+}
+.google-btn svg { width: 22px; height: 22px; }
+.google-btn:hover { background: #fff; }
+.google-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.gate[data-state="busy"] .google-btn { opacity: .5; pointer-events: none; }
+.gate-note { margin: 0; font-size: 14.5px; color: var(--ink-soft); }
+.gate-msg { margin: 0; font-size: 15px; min-height: 1.5em; }
+.gate-msg:not(:empty) { border-left: 3px solid var(--seal); padding: 4px 0 4px 12px; }
+.gate[data-state="busy"] .gate-msg { border-left-color: var(--amber); color: var(--ink-soft); }
+
+/* Giriş yapan kullanıcı */
+.okul-who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 0; font-size: 14px; padding-right: 120px; }
+.okul-who:empty { display: none; }
+.okul-who img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ink); }
+.okul-name { display: grid; line-height: 1.15; font-weight: 600; min-width: 0; }
+.okul-name small { font-family: var(--mono); font-size: 11px; font-weight: 400; overflow-wrap: anywhere; }
+.okul-out, .okul-admin { font-family: var(--mono); font-size: 12px; padding: 5px 10px; border-radius: 6px; border: 1.5px solid var(--ink); color: var(--ink); text-decoration: none; background: transparent; }
+.okul-admin { background: var(--ink); color: var(--paper); }
+.okul-out:hover { background: var(--ink); color: var(--paper); }
+.okul-demo { font-family: var(--mono); font-size: 11.5px; color: var(--amber-deep); background: var(--amber-wash); padding: 3px 8px; border-radius: 4px; }
+@media (min-width: 640px) { .okul-who { padding-right: 200px; } }

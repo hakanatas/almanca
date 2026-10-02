@@ -1,0 +1,55 @@
+rules_version = '2';
+
+// Deutsch Macerası ve diğer okul uygulamaları için ortak kurallar.
+// - Yalnızca doğrulanmış @alkev.k12.tr ve @stu.alkev.k12.tr Google hesapları
+//   herhangi bir veriye erişebilir. Başka bir hesapla giriş yapan kişi hiçbir
+//   şeyi okuyamaz ve yazamaz (kontrol sunucuda yapılır, tarayıcıda değil).
+// - Öğrenci yalnızca kendi profilini ve kendi oturum kayıtlarını görür.
+// - Yönetici: Firestore'da admins/{e-posta} belgesi olan okul hesabı.
+//   Bu belgeyi yalnızca Firebase konsolundan ekleyebilirsiniz.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function schoolUser() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('^[^@]+@(stu[.])?alkev[.]k12[.]tr$');
+    }
+
+    function isAdmin() {
+      return schoolUser()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()));
+    }
+
+    // Yönetici listesi: kişi yalnızca kendi kaydının var olup olmadığını okuyabilir.
+    match /admins/{email} {
+      allow get: if schoolUser() && request.auth.token.email.lower() == email;
+      allow list, write: if false;
+    }
+
+    // Profil + ilerleme (XP, rozetler). Herkes yalnızca kendi belgesini yazar.
+    match /users/{uid} {
+      allow get: if schoolUser() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if schoolUser()
+        && request.auth.uid == uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.size() <= 20;
+      allow delete: if false;
+    }
+
+    // Oyun oturumları: bir kez yazılır, sonradan değiştirilemez.
+    match /sessions/{id} {
+      allow create: if schoolUser()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.app is string && request.resource.data.app.size() <= 40
+        && request.resource.data.game is string && request.resource.data.game.size() <= 40
+        && request.resource.data.durationSec is int
+        && request.resource.data.durationSec >= 0 && request.resource.data.durationSec <= 14400
+        && request.resource.data.items is list && request.resource.data.items.size() <= 300;
+      allow get, list: if schoolUser() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow update, delete: if false;
+    }
+  }
+}
