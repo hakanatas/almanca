@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- tools/build_v2.py tarafından kökteki admin.html dosyasından üretildi; elle düzenlemeyin. -->
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f1eadc">
+  <meta name="robots" content="noindex">
+  <title>Çalışma Raporu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin">
+  <div id="okul-gate" class="gate" data-state="busy">
+    <div class="gate-card">
+      <div class="kicker"><span class="seal">R</span>Yönetici</div>
+      <h1>Çalışma Raporu<span class="dot"></span></h1>
+      <p class="lede">Öğrencilerin hangi uygulamada ne kadar çalıştığını, neleri doğru ve yanlış yaptığını görmek için yönetici okul hesabınızla giriş yapın.</p>
+      <button type="button" class="google-btn" data-okul-signin>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Google ile giriş yap
+      </button>
+      <p class="gate-msg" data-okul-msg role="status" aria-live="polite"></p>
+    </div>
+  </div>
+
+  <div id="app" class="wide">
+    <header class="a-head">
+      <div>
+        <div class="kicker"><span class="seal">R</span>Yönetici · tüm uygulamalar</div>
+        <h1>Çalışma Raporu<span class="dot"></span></h1>
+      </div>
+      <div class="okul-who" id="okul-who"></div>
+    </header>
+
+    <div id="denied" class="notice" hidden>
+      <b>Bu hesabın rapor yetkisi yok.</b>
+      Raporları yalnızca yönetici olarak eklenen okul hesapları görebilir. Yöneticiyi Firebase konsolunda
+      <code>admins</code> koleksiyonuna e-posta adresinizle bir belge ekleyerek tanımlarsınız (README'deki adımlar).
+      <div class="row left"><a class="btn ghost" href="v2/">Oyuna dön</a></div>
+    </div>
+
+    <main id="report" hidden>
+      <div class="filters" role="group" aria-label="Filtreler">
+        <label>Dönem
+          <select id="f-range">
+            <option value="7">Son 7 gün</option>
+            <option value="30" selected>Son 30 gün</option>
+            <option value="90">Son 90 gün</option>
+            <option value="365">Son 1 yıl</option>
+          </select>
+        </label>
+        <label>Uygulama <select id="f-app"><option value="">Hepsi</option></select></label>
+        <label>Oyun <select id="f-game"><option value="">Hepsi</option></select></label>
+        <label>Kim <select id="f-kind"><option value="ogrenci" selected>Öğrenciler</option><option value="ogretmen">Öğretmenler</option><option value="">Herkes</option></select></label>
+        <label class="grow">Ara <input id="f-q" type="search" placeholder="Ad veya e-posta"></label>
+        <button type="button" class="btn ghost" id="f-refresh">Yenile</button>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite">Yükleniyor…</p>
+
+      <section class="tiles" id="tiles"></section>
+
+      <section class="panel">
+        <div class="panel-head"><h2 class="section-title">Günlük çalışma</h2><span class="hint-r" id="chart-note"></span></div>
+        <div class="chart" id="chart"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 class="section-title">Öğrenciler</h2>
+          <button type="button" class="btn ghost small" id="csv-students">CSV indir</button>
+        </div>
+        <p class="section-sub">Bir satıra tıklayınca öğrencinin ayrıntıları açılır. Başlıklara tıklayarak sıralayın.</p>
+        <div class="table-wrap"><table id="t-students"></table></div>
+      </section>
+
+      <section class="panel" id="detail" hidden></section>
+
+      <section class="panel">
+        <div class="panel-head"><h2 class="section-title">Uygulama ve oyunlar</h2></div>
+        <div class="table-wrap"><table id="t-games"></table></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 class="section-title">En çok yanlış yapılanlar</h2>
+          <button type="button" class="btn ghost small" id="csv-sessions">Tüm oturumlar CSV</button>
+        </div>
+        <p class="section-sub">Derste tekrar etmeye değer konular: en az 3 kez sorulmuş, yanlış oranı en yüksek sorular.</p>
+        <div class="table-wrap"><table id="t-missed"></table></div>
+      </section>
+    </main>
+  </div>
+  <div class="tip" id="tip" hidden></div>
+
+  <script src="v2/firebase-config.js"></script>
+  <script type="module" src="js/okul.js"></script>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

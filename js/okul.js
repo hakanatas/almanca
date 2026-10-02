@@ -60,7 +60,7 @@ function renderWho() {
   w.innerHTML = `
     ${user.photo ? `<img src="${user.photo}" alt="" referrerpolicy="no-referrer">` : ''}
     <span class="okul-name">${user.name || user.email}<small>${user.email}</small></span>
-    ${user.admin ? '<a class="okul-admin" href="admin.html">Rapor paneli</a>' : ''}
+    ${user.admin ? `<a class="okul-admin" href="${window.OKUL_ADMIN_URL || 'admin.html'}">Rapor paneli</a>` : ''}
     <button type="button" class="okul-out">Çıkış</button>`;
   w.querySelector('.okul-out').onclick = () => fb.signOut(fb.auth);
 }
