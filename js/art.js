@@ -81,10 +81,26 @@ function maxSVG(extraClass = '') {
 // Mürekkep çizimi oyun ikonları: siyah kontür, kehribar vurgu.
 const ICONS = {
   run: `<svg viewBox="0 0 48 48" aria-hidden="true">
-    <path d="M4 42 L16 8 M24 42 V8 M44 42 L32 8" class="i-line" stroke-width="2" stroke-dasharray="4 4"/>
-    <rect x="15" y="13" width="18" height="11" rx="2" class="i-soft"/>
-    <circle cx="24" cy="34" r="7" class="i-main"/>
-    <path d="M9 30 h-6 M10 36 h-7" class="i-line" stroke-width="2.4"/></svg>`,
+    <circle cx="36" cy="10" r="6" class="i-soft"/><circle cx="36" cy="22" r="6" class="i-main"/><circle cx="36" cy="34" r="6" class="i-soft"/>
+    <path d="M6 30 q6 -16 14 -4" class="i-line" stroke-width="2.4" stroke-dasharray="3 4"/>
+    <ellipse cx="22" cy="31" rx="9" ry="5" class="i-ink"/>
+    <path d="M2 43 C14 42 30 44 46 43" class="i-line" stroke-width="2"/></svg>`,
+  ninja: `<svg viewBox="0 0 48 48" aria-hidden="true">
+    <rect x="6" y="20" width="18" height="13" rx="3" class="i-soft" transform="rotate(-18 15 26)"/>
+    <rect x="24" y="22" width="18" height="13" rx="3" class="i-main" transform="rotate(14 33 28)"/>
+    <path d="M4 40 L44 8" class="i-line" stroke-width="3"/>
+    <circle cx="12" cy="40" r="2.5" class="i-ink"/><circle cx="38" cy="40" r="1.8" class="i-ink"/><circle cx="30" cy="12" r="2" class="i-ink"/></svg>`,
+  fly: `<svg viewBox="0 0 48 48" aria-hidden="true">
+    <rect x="30" y="2" width="10" height="12" class="i-soft"/><rect x="30" y="34" width="10" height="12" class="i-soft"/>
+    <rect x="30" y="20" width="10" height="8" class="i-soft"/>
+    <ellipse cx="14" cy="26" rx="9" ry="6" class="i-main"/>
+    <path d="M10 22 q-4 -10 6 -8" class="i-line" stroke-width="2.4"/>
+    <path d="M23 26 h5" class="i-line" stroke-width="2" stroke-dasharray="2 2"/></svg>`,
+  snake: `<svg viewBox="0 0 48 48" aria-hidden="true">
+    <path d="M6 38 H24 Q32 38 32 30 V18 Q32 10 40 10" class="i-line" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <path d="M6 38 H24 Q32 38 32 30 V18 Q32 10 40 10" stroke="var(--das)" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+    <circle cx="41" cy="9" r="2" class="i-paper"/>
+    <rect x="8" y="12" width="12" height="12" rx="2" class="i-paper"/></svg>`,
   hunt: `<svg viewBox="0 0 48 48" aria-hidden="true">
     <path d="M44 4 L27 19" class="i-line" stroke-width="5" stroke-linecap="round" opacity=".35"/>
     <circle cx="21" cy="24" r="10" class="i-soft"/>

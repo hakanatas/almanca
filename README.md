@@ -40,22 +40,34 @@ python3 -m http.server 8000   # → http://localhost:8000
 
 ## 2. Oyun modları
 
-0. **🏃 Artikel Koşusu** — sonsuz koşu. Max soldan sağa koşar; sağdan gelen kelime kapısına
-   varmadan doğru şeride (*der / die / das*) geç. Doğru bildikçe hızlanır; 3 can, kalkan,
-   ekstra can, altın (x2) kelime ve toplanan puanlar var. Kontrol: alttaki düğmeler, şeride
-   dokunma, yukarı/aşağı kaydırma ya da ↑ ↓ / 1 2 3 tuşları.
-1. **☄️ Kelime Avcısı** — uzay atari oyunu. Üstte Türkçe kelime yazar; yukarıdan düşen
+**Atari oyunları** (`js/arcade.js`, tuval üzerinde; Max gardırobuyla birlikte oynar):
+
+- **🏃 Artikel Koşusu** — yandan görünüşlü sonsuz koşu. Taşların üstünden zıpla, kuşların altından
+  geç, altın topla. Artikel kapısında üst üste üç balon var (der/die/das, sırası her seferinde
+  değişir): yerde kal = alt, zıpla = orta, havada bir daha zıpla = üst balon. Kalkan, can ve
+  çift puan yıldızı; rekor mesafede bayrak.
+- **🥷 Artikel Ninja** — kelime kartları havaya fırlar; parmağınla yalnızca üstte yazan artikeldekileri
+  kes. Yanlış artikeli ya da bombayı kesmek can götürür; tek hamlede birkaç kelime = kombo.
+  Hedef artikel 11-15 saniyede bir değişir.
+- **🐕 Uçan Max** — Flappy Bird tarzı. Dokundukça Max yükselir; her duvarda der/die/das yazan üç
+  boşluk var, üstte yazan kelimenin artikelinden geçmelisin.
+- **🐍 Artikel Yılanı** — yılanın rengi hangi artikelse yalnızca o kelimeleri ye. Yanlışı yemek ya da
+  kendini ısırmak can götürür; her 4 kelimede yılan renk değiştirir.
+
+Diğer oyunlar:
+
+- **☄️ Kelime Avcısı** — uzay atari oyunu. Üstte Türkçe kelime yazar; yukarıdan düşen
    meteorlarda Almancası (artikeliyle) var. Doğru meteoru vur, lazer onu patlatsın. Yanlışı
    vurmak ya da doğruyu kaçırmak bir can götürür (3 can). Her 5 isabette seviye atlanır,
    meteorlar hızlanır ve çoğalır.
-2. **🎯 Artikel Avı** — 60 saniye. Kelime ve resmi çıkar, *der / die / das*
+- **🎯 Artikel Avı** — 60 saniye. Kelime ve resmi çıkar, *der / die / das*
    butonlarından birine bas. Üst üste doğrular kombo puanı verir (x2'ye kadar bonus).
-3. **🃏 Hafıza Kartları** — 6 çift kart. Almanca kelime kartını resim kartıyla eşleştir.
+- **🃏 Hafıza Kartları** — 6 çift kart. Almanca kelime kartını resim kartıyla eşleştir.
    Az hamle = yüksek yıldız.
-4. **👂 Hör zu!** — 10 tur. Hoparlöre bas, Almanca kelimeyi dinle, 4 resimden doğrusunu seç.
-5. **🚂 Cümle Treni** — 6 cümle. Türkçe anlamı verilen cümlenin kelime vagonlarını
+- **👂 Hör zu!** — 10 tur. Hoparlöre bas, Almanca kelimeyi dinle, 4 resimden doğrusunu seç.
+- **🚂 Cümle Treni** — 6 cümle. Türkçe anlamı verilen cümlenin kelime vagonlarını
    trene sırayla tak. Doğruysa tren yola çıkar.
-6. **🚀 Fiil Roketi** — 10 tur. `Du ___ Fußball. (spielen)` → *spielst*. Doğruysa roket uçar.
+- **🚀 Fiil Roketi** — 10 tur. `Du ___ Fußball. (spielen)` → *spielst*. Doğruysa roket uçar.
 
 **⚔️ Sınıf Düellosu** (yalnızca girişli `/v2/` sürümünde, `duello.html`) — Kahoot tarzı canlı
 yarışma. Yönetici listesindeki öğretmen tema, soru sayısı, süre ve soru türlerini (der/die/das,
@@ -76,7 +88,7 @@ Ev, Boş Zaman (veya hepsi karışık). Temalar MEB 2. yabancı dil Almanca A1
   0, 50, 200, 450, 800… XP (giderek zorlaşır).
 - **Yıldızlar:** %90+ ⭐⭐⭐, %70+ ⭐⭐, %40+ ⭐
 - **Günlük seri 🔥:** Her gün en az bir oyun oynayınca artar, bir gün atlanırsa sıfırlanır.
-- **Rozetler:** İlk Adım, Artikel Ninja (10'luk seri), Kusursuz, Kaşif (bütün oyunlar),
+- **Rozetler:** İlk Adım, Seri Ustası (artikel oyunlarında 10'luk seri), Kusursuz, Kaşif (bütün oyunlar),
   Ateşli (3 gün seri), Deutsch-König (5. seviye).
 - **Max'in Gardırobu:** Seviye atladıkça ve rozet kazandıkça Max'e eşya açılır (kep, Bavyera
   şapkası, kral tacı, güneş gözlüğü, yuvarlak gözlük, atkılar, papyon; Ninja bandı "Artikel
