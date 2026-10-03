@@ -400,9 +400,9 @@ ARC.fly = {
     const wordEl = wrap.querySelector('.arc-word');
     let lives = 3, walls = [], y = 0, vy = 0, started = false, over = false, invul = 0, dist = 0, passed = 0, cloudX = 0;
     const MX = () => st.W * 0.24;
-    const mw = () => clamp(st.H * 0.17, 60, 96);
-    const speed = () => st.W * (0.27 + Math.min(0.2, passed * 0.008));
-    const GAP = 0.22, CENTERS = [0.18, 0.5, 0.82];
+    const mw = () => clamp(st.H * 0.12, 46, 70);   // Max küçük: boşluklardan rahat geçsin
+    const speed = () => st.W * (0.22 + Math.min(0.14, passed * 0.005));
+    const GAP = 0.26, CENTERS = [0.17, 0.5, 0.83];
     st.onResize = () => { if (!started) y = st.H * 0.5; };
     y = st.H * 0.5;
     hearts(lives);
@@ -410,6 +410,7 @@ ARC.fly = {
     const nextWall = () => {
       const w = words.next();
       walls.push({ x: st.W + 60, w, order: shuffle(ARTS.slice()), done: false, hit: false });
+      showWord();
     };
     const upcoming = () => walls.find((w) => !w.done);
     const showWord = () => {
@@ -419,7 +420,7 @@ ARC.fly = {
     const flap = () => {
       if (over) return;
       if (!started) { started = true; st.hideMsg(); nextWall(); showWord(); }
-      vy = -st.H * 0.72;
+      vy = -st.H * 0.62;
     };
     const onKey = (e) => { if ([' ', 'ArrowUp', 'w'].includes(e.key)) { e.preventDefault(); flap(); } };
     document.addEventListener('keydown', onKey);
@@ -436,17 +437,17 @@ ARC.fly = {
     const gapOf = (yy) => CENTERS.findIndex((c) => Math.abs(yy - c * st.H) <= GAP * st.H / 2);
 
     const stop = loop(s, (dt, t) => {
-      const W = st.W, H = st.H, ww = clamp(W * 0.11, 46, 80);
+      const W = st.W, H = st.H, ww = clamp(W * 0.09, 40, 64);
       fx.update(dt);
       if (invul > 0) invul -= dt;
       if (started && !over) {
-        vy += H * 2.1 * dt; vy = Math.min(vy, H * 1.2);
+        vy += H * 1.8 * dt; vy = Math.min(vy, H * 0.95);
         y += vy * dt;
         const v = speed();
         dist += v * dt; cloudX += v * dt * 0.2;
         for (const w of walls) w.x -= v * dt;
         const last = walls[walls.length - 1];
-        if (!last || last.x < W - clamp(W * 0.62, 260, 520)) nextWall();
+        if (!last || last.x < W - clamp(W * 0.7, 300, 560) || !upcoming()) nextWall();
         walls = walls.filter((w) => w.x > -ww);
         // Tavan ve zemin
         if (y < 14) { y = 14; vy = Math.max(vy, 0); }
@@ -455,12 +456,12 @@ ARC.fly = {
           if (invul <= 0) lose('Yere çarptın! Daha sık dokun.');
         }
         // Duvarlar
-        const hb = mw() * 0.22;   // Max'in çarpışma yarıçapı
+        const hb = mw() * 0.18;   // Max'in çarpışma yarıçapı (görünenden küçük: sıyırınca affeder)
         for (const w of walls) {
           const inX = MX() + hb > w.x - ww / 2 && MX() - hb < w.x + ww / 2;
           if (inX && !w.hit && invul <= 0) {
             const g = gapOf(y);
-            const inGap = g >= 0 && Math.abs(y - CENTERS[g] * H) + hb * 0.7 <= GAP * H / 2;
+            const inGap = g >= 0 && Math.abs(y - CENTERS[g] * H) + hb * 0.5 <= GAP * H / 2;
             if (!inGap) { w.hit = true; w.done = true; showWord(); lose(`Duvara çarptın! Doğrusu: ${artWord(w.w)}`); }
           }
           if (!w.done && w.x <= MX()) {
